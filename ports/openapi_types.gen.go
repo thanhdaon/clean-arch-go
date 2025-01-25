@@ -9,6 +9,13 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// AssignTask defines model for AssignTask.
+type AssignTask struct {
+	Assignee openapi_types.UUID `json:"assignee"`
+	Assigner openapi_types.UUID `json:"assigner"`
+	TaskId   openapi_types.UUID `json:"taskId"`
+}
+
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -37,3 +44,6 @@ type Task struct {
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = PostTask
+
+// AssignTaskJSONRequestBody defines body for AssignTask for application/json ContentType.
+type AssignTaskJSONRequestBody = AssignTask

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type HttpHandler struct {
@@ -20,5 +21,9 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
+	render.Respond(w, r, []Task{})
+}
+
+func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId openapi_types.UUID) {
 	render.Respond(w, r, []Task{})
 }

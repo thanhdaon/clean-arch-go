@@ -38,9 +38,47 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-
+  /tasks/{taskId}/assign:
+    post:
+      operationId: assignTask
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        description: Assign task to a user
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignTask"
+      responses:
+        "200":
+          description: Task successfully assigned
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
     Task:
       type: object
       required:
@@ -77,16 +115,16 @@ components:
         creator:
           type: string
           format: uuid
-    Error:
+    AssignTask:
       type: object
-      required:
-        - code
-        - message
+      required: [taskId, assigner, assignee]
       properties:
-        code:
-          type: integer
-          format: int32
-          description: Error code
-        message:
+        taskId:
           type: string
-          description: Error message
+          format: uuid
+        assigner:
+          type: string
+          format: uuid
+        assignee:
+          type: string
+          format: uuid

@@ -3,24 +3,24 @@ package user
 import "errors"
 
 var (
-	RoleUnknow   = UserRole{}
-	RoleEmployer = UserRole{"employer"}
-	RoleEmployee = UserRole{"employee"}
+	RoleUnknow   = Role{}
+	RoleEmployer = Role{"employer"}
+	RoleEmployee = Role{"employee"}
 )
 
-type UserRole struct {
+type Role struct {
 	slug string
 }
 
-func (r UserRole) String() string {
+func (r Role) String() string {
 	return r.slug
 }
 
-func (r UserRole) IsZero() bool {
+func (r Role) IsZero() bool {
 	return r == RoleUnknow
 }
 
-func UserRoleFromString(s string) (UserRole, error) {
+func UserRoleFromString(s string) (Role, error) {
 	switch s {
 	case RoleEmployer.slug:
 		return RoleEmployer, nil

@@ -4,23 +4,23 @@ import "errors"
 
 type User interface {
 	UUID() string
-	Role() UserRole
+	Role() Role
 }
 
 type user struct {
 	uuid string
-	role UserRole
+	role Role
 }
 
 func (u user) UUID() string {
 	return u.uuid
 }
 
-func (u user) Role() UserRole {
+func (u user) Role() Role {
 	return u.role
 }
 
-func NewUser(uuid string, role UserRole) (User, error) {
+func NewUser(uuid string, role Role) (User, error) {
 	if uuid == "" {
 		return nil, errors.New("missing user uuid")
 	}

@@ -18,3 +18,7 @@ func NewHttpHandler(app app.Application) HttpHandler {
 func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, []Task{})
 }
+
+func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
+	render.Respond(w, r, []Task{})
+}

@@ -1,5 +1,9 @@
 package adapters
 
+import (
+	"github.com/oklog/ulid/v2"
+)
+
 type ID struct {
 }
 
@@ -8,9 +12,10 @@ func NewID() ID {
 }
 
 func (id ID) New() string {
-	return ""
+	return ulid.Make().String()
 }
 
 func (id ID) IsValid(s string) bool {
-	return true
+	_, err := ulid.Parse(s)
+	return err == nil
 }

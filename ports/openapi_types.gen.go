@@ -9,22 +9,31 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
-const (
-	BearerAuthScopes = "bearerAuth.Scopes"
-)
-
 // Error defines model for Error.
 type Error struct {
+	// Code Error code
+	Code int32 `json:"code"`
+
+	// Message Error message
 	Message string `json:"message"`
+}
+
+// PostTask defines model for PostTask.
+type PostTask struct {
+	Creator openapi_types.UUID `json:"creator"`
+	Title   string             `json:"title"`
 }
 
 // Task defines model for Task.
 type Task struct {
-	AssignedTo openapi_types.UUID `json:"assignedTo"`
-	CreatedAt  time.Time          `json:"createdAt"`
-	CreatedBy  openapi_types.UUID `json:"createdBy"`
-	Status     string             `json:"status"`
-	Title      string             `json:"title"`
-	UpdatedAt  time.Time          `json:"updatedAt"`
-	Uuid       openapi_types.UUID `json:"uuid"`
+	AssignedTo openapi_types.UUID  `json:"assignedTo"`
+	CreatedAt  time.Time           `json:"createdAt"`
+	CreatedBy  openapi_types.UUID  `json:"createdBy"`
+	Id         *openapi_types.UUID `json:"id,omitempty"`
+	Status     string              `json:"status"`
+	Title      string              `json:"title"`
+	UpdatedAt  time.Time           `json:"updatedAt"`
 }
+
+// CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
+type CreateTaskJSONRequestBody = PostTask

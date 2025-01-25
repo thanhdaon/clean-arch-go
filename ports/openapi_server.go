@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/sirupsen/logrus"
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
@@ -22,13 +23,20 @@ func runHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http
 
 	rootRouter := chi.NewRouter()
 	rootRouter.Mount("/api", createHandler(apiRouter))
+	setSwaggerDoc(rootRouter)
 
 	logrus.Info("Starting HTTP server on ", addr)
 
-	err := http.ListenAndServe(addr, rootRouter)
-	if err != nil {
+	if err := http.ListenAndServe(addr, rootRouter); err != nil {
 		logrus.WithError(err).Panic("Unable to start HTTP server")
 	}
+}
+
+func setSwaggerDoc(router *chi.Mux) {
+	router.Get("/doc/*", httpSwagger.Handler(httpSwagger.URL("/doc.yml")))
+	router.Get("/doc.yml", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "ports/openapi.yml")
+	})
 }
 
 func setMiddlewares(router *chi.Mux) {

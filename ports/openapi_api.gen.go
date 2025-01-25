@@ -4,7 +4,6 @@
 package ports
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -16,6 +15,9 @@ type ServerInterface interface {
 
 	// (GET /tasks)
 	GetTasks(w http.ResponseWriter, r *http.Request)
+
+	// (POST /tasks)
+	CreateTask(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -24,6 +26,11 @@ type Unimplemented struct{}
 
 // (GET /tasks)
 func (_ Unimplemented) GetTasks(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /tasks)
+func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -39,14 +46,22 @@ type MiddlewareFunc func(http.Handler) http.Handler
 // GetTasks operation middleware
 func (siw *ServerInterfaceWrapper) GetTasks(w http.ResponseWriter, r *http.Request) {
 
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetTasks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTask operation middleware
+func (siw *ServerInterfaceWrapper) CreateTask(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTask(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -171,6 +186,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/tasks", wrapper.GetTasks)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 
 	return r

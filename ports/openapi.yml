@@ -2,13 +2,7 @@ openapi: "3.0.0"
 info:
   version: 1.0.0
   title: Task Manager
-servers:
-  - url: https://{hostname}/api
-    variables:
-      hostname:
-        default: localhost
-security:
-  - bearerAuth: []
+
 paths:
   /tasks:
     get:
@@ -26,20 +20,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    post:
+      operationId: createTask
+      requestBody:
+        description: todo
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostTask"
+      responses:
+        "201":
+          description: todo
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
   schemas:
     Task:
       type: object
       required:
         [uuid, title, status, createdBy, assignedTo, createdAt, updatedAt]
       properties:
-        uuid:
+        id:
           type: string
           format: uuid
         title:
@@ -60,10 +67,26 @@ components:
         updatedAt:
           type: string
           format: date-time
+    PostTask:
+      type: object
+      required: [title, creator]
+      properties:
+        title:
+          type: string
+          example: "let's do leg day!"
+        creator:
+          type: string
+          format: uuid
     Error:
       type: object
       required:
+        - code
         - message
       properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
         message:
           type: string
+          description: Error message

@@ -77,7 +77,7 @@ func (t *task) ChangeStatus(updater user.User, s Status) error {
 }
 
 func (t *task) allowToChangeStatus(updater user.User) bool {
-	if updater.Role() == user.RoleEmployee {
+	if updater.Role() == user.RoleEmployer {
 		return true
 	}
 

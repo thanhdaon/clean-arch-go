@@ -1,4 +1,4 @@
-package server
+package ports
 
 import (
 	"clean-arch-go/common/logs"
@@ -13,17 +13,17 @@ import (
 )
 
 func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
-	RunHTTPServerOnAddr(":"+os.Getenv("PORT"), createHandler)
+	runHTTPServerOnAddr(":"+os.Getenv("PORT"), createHandler)
 }
 
-func RunHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http.Handler) {
+func runHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http.Handler) {
 	apiRouter := chi.NewRouter()
 	setMiddlewares(apiRouter)
 
 	rootRouter := chi.NewRouter()
 	rootRouter.Mount("/api", createHandler(apiRouter))
 
-	logrus.Info("Starting HTTP server")
+	logrus.Info("Starting HTTP server on ", addr)
 
 	err := http.ListenAndServe(addr, rootRouter)
 	if err != nil {

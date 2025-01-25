@@ -5,7 +5,6 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/logs"
-	"clean-arch-go/common/server"
 	"clean-arch-go/ports"
 	"net/http"
 
@@ -19,8 +18,8 @@ func main() {
 	app, cleanup := newApplication()
 	defer cleanup()
 
-	server.RunHTTPServer(func(router chi.Router) http.Handler {
-		return ports.HandlerFromMux(ports.NewHttpServer(app), router)
+	ports.RunHTTPServer(func(router chi.Router) http.Handler {
+		return ports.HandlerFromMux(ports.NewHttpHandler(app), router)
 	})
 }
 

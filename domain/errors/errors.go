@@ -17,9 +17,6 @@ type Error struct {
 	Kind Kind
 	// The underlying error that triggered this one, if any.
 	Err error
-
-	// Stack information; used only when the 'debug' build tag is set.
-	stack
 }
 
 func (e *Error) isZero() bool {
@@ -35,7 +32,7 @@ type Op string
 // indented on a new line. A server may instead choose to keep each
 // error on a single line by modifying the separator string, perhaps
 // to ":: ".
-var Separator = ":\n\t"
+var Separator = ":: "
 
 // E builds an error value from its arguments.
 // There must be at least one argument or E panics.
@@ -88,9 +85,6 @@ func E(args ...interface{}) error {
 		}
 	}
 
-	// Populate stack information (only in debug mode).
-	e.populateStack()
-
 	prev, ok := e.Err.(*Error)
 	if !ok {
 		return e
@@ -120,7 +114,6 @@ func pad(b *bytes.Buffer, str string) {
 
 func (e *Error) Error() string {
 	b := new(bytes.Buffer)
-	e.printStack(b)
 	if e.Op != "" {
 		pad(b, ": ")
 		b.WriteString(string(e.Op))

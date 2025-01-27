@@ -26,6 +26,7 @@ func runHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http
 	setSwaggerDoc(rootRouter)
 
 	logrus.Info("Starting HTTP server on ", addr)
+	logrus.Info("API Documentation ", "http://localhost:8000/doc/index.html")
 
 	if err := http.ListenAndServe(addr, rootRouter); err != nil {
 		logrus.WithError(err).Panic("Unable to start HTTP server")

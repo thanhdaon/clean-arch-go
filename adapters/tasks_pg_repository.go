@@ -29,6 +29,10 @@ func (r TaskPgRepository) FindTasks(ctx context.Context) ([]query.Task, error) {
 	return []query.Task{}, nil
 }
 
+func (r TaskPgRepository) FindById(ctx context.Context, uuid string) (task.Task, error) {
+	return nil, nil
+}
+
 func (r TaskPgRepository) FindTasksForUser(ctx context.Context, userUUID string) ([]query.Task, error) {
 	return []query.Task{}, errors.E(errors.Op("task.FindTasksForUser"), errors.Internal, fmt.Errorf("dump"))
 }

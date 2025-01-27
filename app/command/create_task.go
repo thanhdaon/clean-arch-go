@@ -26,7 +26,7 @@ func NewCreateTaskHandler(id ID, repo TaskRepository) CreateTaskHandler {
 		log.Fatalln("nil repo")
 	}
 
-	return CreateTaskHandler{id: id}
+	return CreateTaskHandler{id: id, repo: repo}
 }
 
 func (h CreateTaskHandler) Handle(ctx context.Context, cmd CreateTask) (err error) {

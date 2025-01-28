@@ -31,7 +31,6 @@ func TestMsqlTaskRepository_Add(t *testing.T) {
 	creator := newExampleEmployer(t)
 
 	for _, c := range testCases {
-		c := c
 		t.Run(c.Name, func(t *testing.T) {
 			t.Parallel()
 

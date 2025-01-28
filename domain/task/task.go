@@ -147,3 +147,20 @@ func NewTask(creator user.User, uuid, title string) (Task, error) {
 		createdAt: time.Now(),
 	}, nil
 }
+
+func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time) (Task, error) {
+	status, err := StatusFromString(statusString)
+	if err != nil {
+		return nil, err
+	}
+
+	return &task{
+		uuid:       id,
+		title:      title,
+		status:     status,
+		createdBy:  createdBy,
+		assignedTo: assignedTo,
+		createdAt:  createdAt,
+		updatedAt:  updatedAt,
+	}, nil
+}

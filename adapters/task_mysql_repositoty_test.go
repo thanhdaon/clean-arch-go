@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestTaskPgRepository_Add(t *testing.T) {
+func TestMsqlTaskRepository_Add(t *testing.T) {
 	t.Parallel()
-	taskRepository := newTaskPgRepository(t)
+	taskRepository := newMysqlTaskRepository(t)
 
 	testCases := []struct {
 		Name            string
@@ -45,9 +45,11 @@ func TestTaskPgRepository_Add(t *testing.T) {
 	require.NotNil(t, taskRepository)
 }
 
-func newTaskPgRepository(t *testing.T) adapters.TaskPgRepository {
+func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 	t.Helper()
-	return adapters.NewTaskPgRepository()
+	db, err := adapters.NewMySQLConnection()
+	require.NoError(t, err)
+	return adapters.NewMysqlTaskRepository(db)
 }
 
 func newExampleEmployer(t *testing.T) user.User {
@@ -71,11 +73,12 @@ func newUpdatedTask(t *testing.T, creator user.User) task.Task {
 	return newTask
 }
 
-func assertPersistedTaskEquals(t *testing.T, repo adapters.TaskPgRepository, target task.Task) {
+func assertPersistedTaskEquals(t *testing.T, repo adapters.MysqlTaskRepository, target task.Task) {
 	t.Helper()
 
 	persistedTask, err := repo.FindById(context.Background(), target.UUID())
 	require.NoError(t, err)
+	require.NotNil(t, persistedTask)
 
 	assertTasksEquals(t, target, persistedTask)
 }

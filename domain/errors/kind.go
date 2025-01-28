@@ -16,6 +16,7 @@ const (
 	Exist                  // Item already exists.
 	NotExist               // Item does not exist.
 	Internal               // Internal error or inconsistency.
+	Connection             // connection related error (ex. mysql, rabbitmq, ...)
 )
 
 func (k Kind) String() string {
@@ -30,6 +31,8 @@ func (k Kind) String() string {
 		return "item does not exist"
 	case Internal:
 		return "internal error"
+	case Connection:
+		return "connection error"
 	default:
 		return "unknown error kind"
 	}

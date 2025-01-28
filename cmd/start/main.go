@@ -6,6 +6,7 @@ import (
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/logs"
 	"clean-arch-go/ports"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -26,7 +27,12 @@ func main() {
 func newApplication() (app.Application, func()) {
 	logger := logrus.NewEntry(logrus.StandardLogger())
 
-	taskRepository := adapters.NewTaskPgRepository()
+	mysqlDB, err := adapters.NewMySQLConnection()
+	if err != nil {
+		log.Fatalln("Can not connect to mysql", err)
+	}
+
+	taskRepository := adapters.NewMysqlTaskRepository(mysqlDB)
 
 	application := app.Application{
 		Queries: app.Queries{

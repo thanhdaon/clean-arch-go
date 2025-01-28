@@ -6,6 +6,7 @@ import (
 	"clean-arch-go/domain/user"
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -90,6 +91,12 @@ func assertTasksEquals(t *testing.T, task1, task2 task.Task) {
 	require.Equal(t, task1.Status().String(), task2.Status().String())
 	require.Equal(t, task1.CreatedBy(), task2.CreatedBy())
 	require.Equal(t, task1.AssignedTo(), task2.AssignedTo())
-	require.True(t, task1.CreatedAt().Equal(task2.CreatedAt()))
-	require.True(t, task1.UpdatedAt().Equal(task2.UpdatedAt()))
+	compareTimesIgnoringNanoseconds(t, task1.CreatedAt(), task2.CreatedAt())
+	compareTimesIgnoringNanoseconds(t, task1.UpdatedAt(), task2.UpdatedAt())
+}
+
+func compareTimesIgnoringNanoseconds(t *testing.T, t1, t2 time.Time) {
+	t.Helper()
+
+	require.Equal(t, t1.Truncate(time.Second).UTC(), t2.Truncate(time.Second).UTC())
 }

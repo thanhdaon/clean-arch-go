@@ -5,34 +5,39 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/logs"
+	"clean-arch-go/migrations"
 	"clean-arch-go/ports"
-	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	logs.Init()
 
-	app, cleanup := newApplication()
-	defer cleanup()
+	logger := logrus.NewEntry(logrus.StandardLogger())
+
+	mysqlDB, err := adapters.NewMySQLConnection()
+	if err != nil {
+		logger.Fatalln("Can not connect to mysql", err)
+	}
+
+	if err := migrations.Run(mysqlDB.DB); err != nil {
+		logger.Fatalln("mysql migratore failed", err)
+	}
+
+	app := newApplication(mysqlDB, logger)
 
 	ports.RunHTTPServer(func(router chi.Router) http.Handler {
 		return ports.HandlerFromMux(ports.NewHttpHandler(app), router)
 	})
 }
 
-func newApplication() (app.Application, func()) {
-	logger := logrus.NewEntry(logrus.StandardLogger())
+func newApplication(db *sqlx.DB, logger *logrus.Entry) app.Application {
 
-	mysqlDB, err := adapters.NewMySQLConnection()
-	if err != nil {
-		log.Fatalln("Can not connect to mysql", err)
-	}
-
-	taskRepository := adapters.NewMysqlTaskRepository(mysqlDB)
+	taskRepository := adapters.NewMysqlTaskRepository(db)
 
 	application := app.Application{
 		Queries: app.Queries{
@@ -40,5 +45,5 @@ func newApplication() (app.Application, func()) {
 		},
 	}
 
-	return application, func() {}
+	return application
 }

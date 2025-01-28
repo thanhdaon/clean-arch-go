@@ -15,13 +15,13 @@ import (
 )
 
 type MysqlTask struct {
-	ID         string    `db:"id"`
-	Title      string    `db:"title"`
-	Status     string    `db:"status"`
-	CreatedBy  string    `db:"created_by"`
-	AssignedTo string    `db:"assigned_to"`
-	CreatedAt  time.Time `db:"created_at"`
-	UpdatedAt  time.Time `db:"updated_at"`
+	ID         string       `db:"id"`
+	Title      string       `db:"title"`
+	Status     string       `db:"status"`
+	CreatedBy  string       `db:"created_by"`
+	AssignedTo string       `db:"assigned_to"`
+	CreatedAt  time.Time    `db:"created_at"`
+	UpdatedAt  sql.NullTime `db:"updated_at"`
 }
 
 type MysqlTaskRepository struct {
@@ -42,7 +42,7 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 		CreatedBy:  t.CreatedBy(),
 		AssignedTo: t.AssignedTo(),
 		CreatedAt:  t.CreatedAt(),
-		UpdatedAt:  t.UpdatedAt(),
+		UpdatedAt:  timeToNullTime(t.UpdatedAt()),
 	}
 
 	query := `
@@ -82,7 +82,10 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 		return nil, errors.E(op, errors.Internal, err)
 	}
 
-	domainTask, err := task.From(data.ID, data.Title, data.Status, data.CreatedBy, data.AssignedTo, data.CreatedAt, data.UpdatedAt)
+	domainTask, err := task.From(
+		data.ID, data.Title, data.Status, data.CreatedBy, data.AssignedTo,
+		data.CreatedAt, nullTimeToTime(data.UpdatedAt),
+	)
 	if err != nil {
 		return nil, errors.E(op, errors.Internal, err)
 	}
@@ -112,4 +115,18 @@ func NewMySQLConnection() (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+func timeToNullTime(t time.Time) sql.NullTime {
+	if t.IsZero() {
+		return sql.NullTime{Valid: false}
+	}
+	return sql.NullTime{Time: t, Valid: true}
+}
+
+func nullTimeToTime(nt sql.NullTime) time.Time {
+	if nt.Valid {
+		return nt.Time
+	}
+	return time.Time{}
 }

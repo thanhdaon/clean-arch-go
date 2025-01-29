@@ -65,7 +65,16 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 }
 
 func (r MysqlTaskRepository) FindTasks(ctx context.Context) ([]query.Task, error) {
-	return []query.Task{}, nil
+	op := errors.Op("MysqlTaskRepository.FindTasks")
+
+	data := []MysqlTask{}
+	query := `SELECT * FROM tasks`
+
+	if err := r.db.GetContext(ctx, &data, query); err != nil {
+		return nil, errors.E(op, errors.Internal, err)
+	}
+
+	return toQueryTasks(data), nil
 }
 
 func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Task, error) {
@@ -108,6 +117,7 @@ func NewMySQLConnection() (*sqlx.DB, error) {
 	config.Passwd = os.Getenv("MYSQL_PASSWORD")
 	config.DBName = os.Getenv("MYSQL_DATABASE")
 	config.ParseTime = true // with that parameter, we can use time.Time in mysqlHour.Hour
+	config.Loc = time.UTC
 
 	db, err := sqlx.Connect("mysql", config.FormatDSN())
 	if err != nil {
@@ -129,4 +139,22 @@ func nullTimeToTime(nt sql.NullTime) time.Time {
 		return nt.Time
 	}
 	return time.Time{}
+}
+
+func toQueryTasks(items []MysqlTask) []query.Task {
+	ret := []query.Task{}
+
+	for _, item := range items {
+		ret = append(ret, query.Task{
+			UUID:       item.ID,
+			Title:      item.Title,
+			Status:     item.Status,
+			CreatedBy:  item.CreatedBy,
+			AssignedTo: item.AssignedTo,
+			CreatedAt:  item.CreatedAt,
+			UpdatedAt:  nullTimeToTime(item.UpdatedAt),
+		})
+	}
+
+	return ret
 }

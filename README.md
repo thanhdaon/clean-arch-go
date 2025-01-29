@@ -21,7 +21,47 @@ Build a Task Management API with role-based access, enabling two types of users:
   - Total number of tasks assigned.
   - Number of tasks completed by each employee.
 
-## Integration tests
+## Clean Architecture
+
+![alt text](images/image2.png)
+
+Our approach to Clean Architecture is two ideas combined: separating Ports and Adapters and limiting how code structures refer to each other.
+
+- **An adapter is how your application talks to the external world**. You have to **adapt** your internal structures to what the external API expects. Think SQL queries, HTTP or gRPC clients, file readers and writers, Pub/Sub message publishers.
+- **A port is an input to your application**, and the only way the external world can reach it. It could be an HTTP or gRPC server, a CLI command, or a Pub/Sub message subscriber.
+- **The application logic** is a thin layer that “glues together” other layers. It’s also known as “use cases”. If you read this code and can’t tell what database it uses or what URL it calls, it’s a good sign. Sometimes it’s very short, and that’s fine. Think about it as an orchestrator.
+- If you also follow Domain-Driven Design, you can introduce a **domain layer that holds just the business logic**.
+
+### The Dependency Inversion Principle
+
+A clear separation between ports, adapters, and application logic is useful by itself. Clean Architecture improves it further with Dependency Inversion.
+
+The rule states that **outer layers (implementation details) can refer to inner layers (abstractions), but not the other way around**. The inner layers should instead depend on interfaces.
+
+- The **Domain** knows nothing about other layers whatsoever. It contains pure business logic.
+- The **Application** can import domain but knows nothing about outer layers. **It has no idea whether it’s being called by an HTTP request, a Pub/Sub handler, or a CLI command**.
+- **Ports** can import inner layers. Ports are the entry points to the application, so they often execute application services or commands. However, they can’t directly access **Adapters**.
+- **Adapters** can import inner layers. Usually, they will operate on types found in **Application** and **Domain**, for example, retrieving them from the database.
+
+![alt text](images/image-1.png)
+
+## Test Architecture
+
+### Unit tests
+
+![alt text](images/image-3.png)
+
+The domain layer is where the most complex logic of your service lives. However, **the tests here should be some of the simplest to write and running super fast**. There are no external dependencies in the domain, so you don’t need any special infrastructure or mocks (except for really complex scenarios, but let’s leave that for now).
+
+As a rule of thumb, you should aim for high test coverage in the domain layer. Make sure you test only the exported code (black-box testing). Adding the `_test` suffix to the package name is a great practice to enforce this.
+
+The domain code is pure logic and straightforward to test, so it’s the best place to check all corner cases. Table-driven tests are especially great for this.
+
+We leave the domain and enter the application layer. After introducing CQRS, we’ve split it further into Commands and Queries.
+
+Depending on your project, there could be nothing to test or some complex scenarios to cover. Most of the time, especially in queries, this code just glues together other layers. Testing this doesn’t add any value. But if there’s any complex orchestration in commands, it’s another good case for unit tests.
+
+### Integration tests
 
 An integration test is a test that checks if an adapter works correctly with an external infrastructure.
 

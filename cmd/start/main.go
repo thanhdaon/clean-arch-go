@@ -5,7 +5,6 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/logs"
-	"clean-arch-go/migrations"
 	"clean-arch-go/ports"
 	"net/http"
 
@@ -22,10 +21,6 @@ func main() {
 	mysqlDB, err := adapters.NewMySQLConnection()
 	if err != nil {
 		logger.Fatalln("Can not connect to mysql", err)
-	}
-
-	if err := migrations.Run(mysqlDB.DB); err != nil {
-		logger.Fatalln("mysql migratore failed", err)
 	}
 
 	app := newApplication(mysqlDB, logger)

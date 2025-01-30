@@ -1,7 +1,7 @@
 package main
 
 import (
-	"clean-arch-go/domain/errors"
+	"clean-arch-go/common/errors"
 	"fmt"
 )
 

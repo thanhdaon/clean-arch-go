@@ -2,7 +2,8 @@ package adapters
 
 import (
 	"clean-arch-go/app/query"
-	"clean-arch-go/domain/errors"
+	"clean-arch-go/common/errors"
+	"clean-arch-go/domain/errkind"
 	"database/sql"
 	"os"
 	"time"
@@ -24,7 +25,7 @@ func NewMySQLConnection() (*sqlx.DB, error) {
 
 	db, err := sqlx.Connect("mysql", config.FormatDSN())
 	if err != nil {
-		return nil, errors.E(errors.Op("connect-mysql"), errors.Connection, err)
+		return nil, errors.E(errors.Op("connect-mysql"), errkind.Connection, err)
 	}
 
 	return db, nil

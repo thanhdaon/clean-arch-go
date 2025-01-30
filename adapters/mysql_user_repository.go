@@ -1,7 +1,8 @@
 package adapters
 
 import (
-	"clean-arch-go/domain/errors"
+	"clean-arch-go/common/errors"
+	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/user"
 
 	"context"
@@ -40,7 +41,7 @@ func (r MysqlUserRepository) Add(ctx context.Context, u user.User) error {
 	`
 
 	if _, err := r.db.NamedExec(query, added); err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	return nil
@@ -51,7 +52,7 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 
 	tx, err := r.db.Beginx()
 	if err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	defer func() {
@@ -60,16 +61,16 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 
 	existingUser, err := r.FindById(ctx, uuid)
 	if err != nil {
-		if errors.Is(errors.NotExist, err) {
-			return errors.E(op, errors.NotExist, err)
+		if errors.Is(errkind.NotExist, err) {
+			return errors.E(op, errkind.NotExist, err)
 		}
 
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	updatedUser, err := updateFn(ctx, existingUser)
 	if err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	updated := MysqlUser{
@@ -85,16 +86,16 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 	`
 	result, err := r.db.NamedExec(query, updated)
 	if err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	if rowsAffected == 0 {
-		return errors.E(op, errors.NotExist, fmt.Errorf("user with id %s not found", uuid))
+		return errors.E(op, errkind.NotExist, fmt.Errorf("user with id %s not found", uuid))
 	}
 
 	return nil
@@ -108,15 +109,15 @@ func (r MysqlUserRepository) FindById(ctx context.Context, uuid string) (user.Us
 
 	if err := r.db.GetContext(ctx, &data, query, uuid); err != nil {
 		if err == sql.ErrNoRows {
-			return nil, errors.E(op, errors.NotExist, err)
+			return nil, errors.E(op, errkind.NotExist, err)
 		}
 
-		return nil, errors.E(op, errors.Internal, err)
+		return nil, errors.E(op, errkind.Internal, err)
 	}
 
 	domainUser, err := user.From(data.ID, data.Role)
 	if err != nil {
-		return nil, errors.E(op, errors.Internal, err)
+		return nil, errors.E(op, errkind.Internal, err)
 	}
 
 	return domainUser, nil
@@ -128,7 +129,7 @@ func (r MysqlUserRepository) RemoveAll(ctx context.Context) error {
 	query := `TRUNCATE TABLE users`
 
 	if _, err := r.db.ExecContext(ctx, query); err != nil {
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	}
 
 	return nil
@@ -139,13 +140,13 @@ func (r MysqlUserRepository) finishTransaction(err error, tx *sqlx.Tx) error {
 
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.E(op, errors.Internal, rollbackErr)
+			return errors.E(op, errkind.Internal, rollbackErr)
 		}
 
-		return errors.E(op, errors.Internal, err)
+		return errors.E(op, errkind.Internal, err)
 	} else {
 		if commitErr := tx.Commit(); commitErr != nil {
-			return errors.E(op, errors.Internal, "failed to commit transaction")
+			return errors.E(op, errkind.Internal, "failed to commit transaction")
 		}
 
 		return nil

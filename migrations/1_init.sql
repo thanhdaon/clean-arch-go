@@ -1,5 +1,4 @@
 -- +migrate Up
--- SQL in section 'Up' is executed when this migration is applied
 CREATE TABLE tasks (
     id VARCHAR(255) NOT NULL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -12,5 +11,4 @@ CREATE TABLE tasks (
 
 
 -- +migrate Down
--- SQL section 'Down' is executed when this migration is rolled back
 DROP TABLE tasks;

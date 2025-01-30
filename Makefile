@@ -15,3 +15,9 @@ start:
 demo:
 	go run cmd/demo/main.go
 
+migration-status:
+	sql-migrate status -config=migrations/dbconfig.yml -env="development"
+
+migration-new:
+	sql-migrate new -config=migrations/dbconfig.yml -env="development"
+

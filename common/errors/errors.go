@@ -94,12 +94,12 @@ func E(args ...interface{}) error {
 	// so the message won't contain the same kind, file name or user name
 	// twice.
 	if prev.Kind == e.Kind {
-		prev.Kind = Other
+		prev.Kind = Kind{}
 	}
 	// If this error has Kind unset or Other, pull up the inner one.
-	if e.Kind == Other {
+	if e.Kind.isZero() {
 		e.Kind = prev.Kind
-		prev.Kind = Other
+		prev.Kind = Kind{}
 	}
 	return e
 }
@@ -189,7 +189,7 @@ func Is(kind Kind, err error) bool {
 	if !ok {
 		return false
 	}
-	if e.Kind != Other {
+	if isZero := e.Kind.isZero(); !isZero {
 		return e.Kind == kind
 	}
 	if e.Err != nil {

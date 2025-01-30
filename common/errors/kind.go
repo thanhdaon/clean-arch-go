@@ -1,7 +1,5 @@
 package errors
 
-var Other = Kind{}
-
 type Kind struct {
 	slug string
 }

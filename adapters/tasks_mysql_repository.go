@@ -60,17 +60,76 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 }
 
 func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, updateFn TaskUpdater) error {
+	op := errors.Op("MysqlTaskRepository.UpdateByID")
+
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	defer func() {
+		err = r.finishTransaction(err, tx)
+	}()
+
+	existingTask, err := r.FindById(ctx, uuid)
+	if err != nil {
+		if errors.Is(errors.NotExist, err) {
+			return errors.E(op, errors.NotExist, err)
+		}
+
+		return errors.E(op, errors.Internal, err)
+	}
+
+	updatedTask, err := updateFn(ctx, existingTask)
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	updated := MysqlTask{
+		ID:         updatedTask.UUID(),
+		Title:      updatedTask.Title(),
+		Status:     updatedTask.Status().String(),
+		CreatedBy:  updatedTask.CreatedBy(),
+		AssignedTo: updatedTask.AssignedTo(),
+		CreatedAt:  updatedTask.CreatedAt(),
+		UpdatedAt:  timeToNullTime(updatedTask.UpdatedAt()),
+	}
+
+	query := `
+		UPDATE tasks 
+		SET 
+			title = :title,
+			status = :status,
+			created_by = :created_by,
+			assigned_to = :assigned_to,
+			created_at = :created_at,
+			updated_at = :updated_at
+		WHERE id = :id;
+	`
+	result, err := r.db.NamedExec(query, updated)
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	if rowsAffected == 0 {
+		return errors.E(op, errors.NotExist, fmt.Errorf("task with id %s not found", uuid))
+	}
 
 	return nil
 }
 
-func (r MysqlTaskRepository) FindTasks(ctx context.Context) ([]query.Task, error) {
-	op := errors.Op("MysqlTaskRepository.FindTasks")
+func (r MysqlTaskRepository) AllTasks(ctx context.Context) ([]query.Task, error) {
+	op := errors.Op("MysqlTaskRepository.AllTasks")
 
 	data := []MysqlTask{}
-	query := `SELECT * FROM tasks`
+	query := "SELECT * FROM `tasks`"
 
-	if err := r.db.GetContext(ctx, &data, query); err != nil {
+	if err := r.db.SelectContext(ctx, &data, query); err != nil {
 		return nil, errors.E(op, errors.Internal, err)
 	}
 
@@ -125,6 +184,36 @@ func NewMySQLConnection() (*sqlx.DB, error) {
 	}
 
 	return db, nil
+}
+
+func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {
+	op := errors.Op("MysqlTaskRepository.RemoveAllTasks")
+
+	query := `TRUNCATE TABLE tasks`
+
+	if _, err := r.db.ExecContext(ctx, query); err != nil {
+		return errors.E(op, errors.Internal, err)
+	}
+
+	return nil
+}
+
+func (r MysqlTaskRepository) finishTransaction(err error, tx *sqlx.Tx) error {
+	op := errors.Op("MysqlTaskRepository.finishTransaction")
+
+	if err != nil {
+		if rollbackErr := tx.Rollback(); rollbackErr != nil {
+			return errors.E(op, errors.Internal, rollbackErr)
+		}
+
+		return errors.E(op, errors.Internal, err)
+	} else {
+		if commitErr := tx.Commit(); commitErr != nil {
+			return errors.E(op, errors.Internal, "failed to commit transaction")
+		}
+
+		return nil
+	}
 }
 
 func timeToNullTime(t time.Time) sql.NullTime {

@@ -20,7 +20,7 @@ type tasksHandler struct {
 }
 
 type TasksReadModel interface {
-	FindTasks(ctx context.Context) ([]Task, error)
+	AllTasks(ctx context.Context) ([]Task, error)
 	FindTasksForUser(ctx context.Context, userUUID string) ([]Task, error)
 }
 
@@ -44,7 +44,7 @@ func (h tasksHandler) Handle(ctx context.Context, query Tasks) ([]Task, error) {
 		return tasks, nil
 	}
 
-	tasks, err := h.readmodel.FindTasks(ctx)
+	tasks, err := h.readmodel.AllTasks(ctx)
 	if err != nil {
 		return nil, err
 	}

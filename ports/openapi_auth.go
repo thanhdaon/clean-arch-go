@@ -6,25 +6,27 @@ import (
 	"context"
 	"net/http"
 	"strings"
+
+	"firebase.google.com/go/v4/auth"
 )
 
-type JwtHttpMiddleware struct {
-	jwtSecret []byte
+type FirebaseAuthHttpMiddleware struct {
+	AuthClient *auth.Client
 }
 
-func (a JwtHttpMiddleware) Middleware(next http.Handler) http.Handler {
+func (a FirebaseAuthHttpMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
 		bearerToken := a.tokenFromHeader(r)
 		if bearerToken == "" {
-			Unauthorised("empty-bearer-token", nil, w, r)
+			next.ServeHTTP(w, r)
 			return
 		}
 
 		token, err := a.AuthClient.VerifyIDToken(ctx, bearerToken)
 		if err != nil {
-			Unauthorised("unable-to-verify-jwt", err, w, r)
+			unauthorised("unable-to-verify-jwt", err, w, r)
 			return
 		}
 
@@ -32,13 +34,14 @@ func (a JwtHttpMiddleware) Middleware(next http.Handler) http.Handler {
 			UUID: token.UID,
 			Role: token.Claims["role"].(string),
 		})
+
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})
 }
 
-func (a JwtHttpMiddleware) tokenFromHeader(r *http.Request) string {
+func (a FirebaseAuthHttpMiddleware) tokenFromHeader(r *http.Request) string {
 	headerValue := r.Header.Get("Authorization")
 
 	if len(headerValue) > 7 && strings.ToLower(headerValue[0:6]) == "bearer" {
@@ -53,10 +56,10 @@ type User struct {
 	Role string
 }
 
-type ctxKey int
+type ctxKey string
 
 const (
-	userContextKey ctxKey = iota
+	userContextKey ctxKey = "user-context-key"
 )
 
 func UserFromCtx(ctx context.Context) (User, error) {

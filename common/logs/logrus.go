@@ -28,11 +28,3 @@ func SetFormatter(logger *logrus.Logger) {
 		})
 	}
 }
-func AddHookLoki(logger *logrus.Logger) {
-	lokiHook := newLokiHook("https://loki.justshowcase.site", map[string]string{
-		"app":     "ticket",
-		"service": "backend",
-	})
-
-	logger.AddHook(lokiHook)
-}

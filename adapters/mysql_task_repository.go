@@ -52,7 +52,7 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 	`
 
 	if _, err := r.db.NamedExec(query, added); err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	return nil
@@ -63,7 +63,7 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 
 	tx, err := r.db.Beginx()
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	defer func() {
@@ -76,12 +76,12 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 			return errors.E(op, errkind.NotExist, err)
 		}
 
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	updatedTask, err := updateFn(ctx, existingTask)
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	updated := MysqlTask{
@@ -107,12 +107,12 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 	`
 	result, err := r.db.NamedExec(query, updated)
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	if rowsAffected == 0 {
@@ -129,7 +129,7 @@ func (r MysqlTaskRepository) AllTasks(ctx context.Context) ([]query.Task, error)
 	query := "SELECT * FROM `tasks`"
 
 	if err := r.db.SelectContext(ctx, &data, query); err != nil {
-		return nil, errors.E(op, errkind.Internal, err)
+		return nil, errors.E(op, err)
 	}
 
 	return fromMysqlTasksToQueryTasks(data), nil
@@ -146,7 +146,7 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 			return nil, errors.E(op, errkind.NotExist, err)
 		}
 
-		return nil, errors.E(op, errkind.Internal, err)
+		return nil, errors.E(op, err)
 	}
 
 	domainTask, err := task.From(
@@ -154,14 +154,14 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 		data.CreatedAt, nullTimeToTime(data.UpdatedAt),
 	)
 	if err != nil {
-		return nil, errors.E(op, errkind.Internal, err)
+		return nil, errors.E(op, err)
 	}
 
 	return domainTask, nil
 }
 
 func (r MysqlTaskRepository) FindTasksForUser(ctx context.Context, userUUID string) ([]query.Task, error) {
-	return []query.Task{}, errors.E(errors.Op("task.FindTasksForUser"), errkind.Internal, fmt.Errorf("dump"))
+	return []query.Task{}, errors.E(errors.Op("task.FindTasksForUser"), fmt.Errorf("dump"))
 }
 
 func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {
@@ -170,7 +170,7 @@ func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {
 	query := `TRUNCATE TABLE tasks`
 
 	if _, err := r.db.ExecContext(ctx, query); err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	return nil
@@ -181,13 +181,13 @@ func (r MysqlTaskRepository) finishTransaction(err error, tx *sqlx.Tx) error {
 
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.E(op, errkind.Internal, rollbackErr)
+			return errors.E(op, rollbackErr)
 		}
 
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	} else {
 		if commitErr := tx.Commit(); commitErr != nil {
-			return errors.E(op, errkind.Internal, "failed to commit transaction")
+			return errors.E(op, "failed to commit transaction")
 		}
 
 		return nil

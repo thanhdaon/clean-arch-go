@@ -86,12 +86,12 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 	`
 	result, err := r.db.NamedExec(query, updated)
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	if rowsAffected == 0 {
@@ -112,12 +112,12 @@ func (r MysqlUserRepository) FindById(ctx context.Context, uuid string) (user.Us
 			return nil, errors.E(op, errkind.NotExist, err)
 		}
 
-		return nil, errors.E(op, errkind.Internal, err)
+		return nil, errors.E(op, err)
 	}
 
 	domainUser, err := user.From(data.ID, data.Role)
 	if err != nil {
-		return nil, errors.E(op, errkind.Internal, err)
+		return nil, errors.E(op, err)
 	}
 
 	return domainUser, nil
@@ -129,7 +129,7 @@ func (r MysqlUserRepository) RemoveAll(ctx context.Context) error {
 	query := `TRUNCATE TABLE users`
 
 	if _, err := r.db.ExecContext(ctx, query); err != nil {
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	}
 
 	return nil
@@ -140,13 +140,13 @@ func (r MysqlUserRepository) finishTransaction(err error, tx *sqlx.Tx) error {
 
 	if err != nil {
 		if rollbackErr := tx.Rollback(); rollbackErr != nil {
-			return errors.E(op, errkind.Internal, rollbackErr)
+			return errors.E(op, rollbackErr)
 		}
 
-		return errors.E(op, errkind.Internal, err)
+		return errors.E(op, err)
 	} else {
 		if commitErr := tx.Commit(); commitErr != nil {
-			return errors.E(op, errkind.Internal, "failed to commit transaction")
+			return errors.E(op, "failed to commit transaction")
 		}
 
 		return nil

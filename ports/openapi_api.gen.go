@@ -9,7 +9,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 // ServerInterface represents all server handlers.
@@ -22,7 +21,7 @@ type ServerInterface interface {
 	CreateTask(w http.ResponseWriter, r *http.Request)
 
 	// (POST /tasks/{taskId}/assign/{assigneeId})
-	AssignTask(w http.ResponseWriter, r *http.Request, taskId openapi_types.UUID, assigneeId openapi_types.UUID)
+	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -40,7 +39,7 @@ func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // (POST /tasks/{taskId}/assign/{assigneeId})
-func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId openapi_types.UUID, assigneeId openapi_types.UUID) {
+func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -87,7 +86,7 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 	var err error
 
 	// ------------- Path parameter "taskId" -------------
-	var taskId openapi_types.UUID
+	var taskId string
 
 	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {
@@ -96,7 +95,7 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 	}
 
 	// ------------- Path parameter "assigneeId" -------------
-	var assigneeId openapi_types.UUID
+	var assigneeId string
 
 	err = runtime.BindStyledParameterWithOptions("simple", "assigneeId", chi.URLParam(r, "assigneeId"), &assigneeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
 	if err != nil {

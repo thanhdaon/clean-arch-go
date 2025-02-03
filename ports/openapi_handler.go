@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
 type HttpHandler struct {
@@ -59,7 +58,7 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	responseSuccess(w, r)
 }
 
-func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId openapi_types.UUID, assigneeId openapi_types.UUID) {
+func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, assigneeId string) {
 	op := errors.Op("http.AssignTask")
 	ctx := r.Context()
 
@@ -70,8 +69,8 @@ func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId o
 	}
 
 	err = h.app.Commands.AssignTask.Handle(ctx, command.AssignTask{
-		TaskId:     taskId.String(),
-		AssigneeId: assigneeId.String(),
+		TaskId:     taskId,
+		AssigneeId: assigneeId,
 		Assigner:   assigner,
 	})
 

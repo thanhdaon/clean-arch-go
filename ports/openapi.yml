@@ -47,13 +47,11 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
         - name: assigneeId
           in: path
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         "200":
           description: Task successfully assigned

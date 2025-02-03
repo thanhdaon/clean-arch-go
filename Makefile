@@ -13,4 +13,4 @@ start:
 	go run cmd/start/main.go
 
 demo:
-	go run cmd/demo/main.go
+	go run cmd/demo/main.go 

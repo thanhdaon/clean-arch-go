@@ -14,7 +14,7 @@ import (
 
 func TestMsqlTaskRepository_Add(t *testing.T) {
 	t.Parallel()
-	taskRepository := newMysqlTaskRepository(t)
+	taskRepository := newFirestoreRepository(t)
 
 	testCases := []struct {
 		Name            string
@@ -77,7 +77,7 @@ func TestMysqlTaskRepository_AllTasks(t *testing.T) {
 func TestMysqlTaskRepository_Update(t *testing.T) {
 	t.Parallel()
 
-	taskRepository := newMysqlTaskRepository(t)
+	taskRepository := newFirestoreRepository(t)
 
 	creator := newExampleEmployer(t)
 	assignee := newExampleEmployer(t)
@@ -150,7 +150,7 @@ func assertQueryTasksIncludes(t *testing.T, allTasks []query.Task, tasks []task.
 	}
 }
 
-func assertPersistedTaskEquals(t *testing.T, repo adapters.MysqlTaskRepository, target task.Task) {
+func assertPersistedTaskEquals(t *testing.T, repo adapters.FirestoreTaskRepository, target task.Task) {
 	t.Helper()
 
 	persistedTask, err := repo.FindById(context.Background(), target.UUID())

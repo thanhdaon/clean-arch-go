@@ -17,6 +17,7 @@ type TaskRepository interface {
 }
 
 type UserRepository interface {
+	Add(context.Context, user.User) error
 	FindById(ctx context.Context, uuid string) (user.User, error)
 }
 

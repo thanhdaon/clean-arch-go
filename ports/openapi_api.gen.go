@@ -22,6 +22,9 @@ type ServerInterface interface {
 
 	// (POST /tasks/{taskId}/assign/{assigneeId})
 	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
+
+	// (POST /users)
+	AddUser(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -40,6 +43,11 @@ func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // (POST /tasks/{taskId}/assign/{assigneeId})
 func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /users)
+func (_ Unimplemented) AddUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -105,6 +113,20 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AssignTask(w, r, taskId, assigneeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddUser operation middleware
+func (siw *ServerInterfaceWrapper) AddUser(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddUser(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -235,6 +257,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/users", wrapper.AddUser)
 	})
 
 	return r

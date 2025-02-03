@@ -13,6 +13,7 @@ type Application struct {
 type Commands struct {
 	CreateTask command.CreateTaskHandler
 	AssignTask command.AssignTaskHandler
+	AddUser    command.AddUserHandler
 }
 
 type Queries struct {

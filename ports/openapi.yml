@@ -4,6 +4,25 @@ info:
   title: Task Manager
 
 paths:
+  /users:
+    post:
+      operationId: addUser
+      requestBody:
+        description: todo
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostUser"
+      responses:
+        "201":
+          description: todo
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /tasks:
     get:
       operationId: getTasks
@@ -72,6 +91,7 @@ components:
         code:
           type: integer
           format: int32
+          example: 500
           description: Error code
         message:
           type: string
@@ -102,6 +122,13 @@ components:
         updatedAt:
           type: string
           format: date-time
+    PostUser:
+      type: object
+      required: [role]
+      properties:
+        role:
+          type: string
+          example: "employer"
     PostTask:
       type: object
       required: [title, creator]

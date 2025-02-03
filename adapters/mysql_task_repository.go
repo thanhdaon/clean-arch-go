@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/errors"
 	"clean-arch-go/domain/errkind"
@@ -58,7 +59,7 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 	return nil
 }
 
-func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, updateFn func(context.Context, task.Task) (task.Task, error)) error {
+func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, updateFn command.TaskUpdater) error {
 	op := errors.Op("MysqlTaskRepository.UpdateByID")
 
 	tx, err := r.db.Beginx()

@@ -38,7 +38,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
-  /tasks/{taskId}/assign:
+  /tasks/{taskId}/assign/{assigneeId}:
     post:
       operationId: assignTask
       parameters:
@@ -48,13 +48,12 @@ paths:
           schema:
             type: string
             format: uuid
-      requestBody:
-        description: Assign task to a user
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AssignTask"
+        - name: assigneeId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
       responses:
         "200":
           description: Task successfully assigned
@@ -113,18 +112,5 @@ components:
           type: string
           example: "let's do leg day!"
         creator:
-          type: string
-          format: uuid
-    AssignTask:
-      type: object
-      required: [taskId, assigner, assignee]
-      properties:
-        taskId:
-          type: string
-          format: uuid
-        assigner:
-          type: string
-          format: uuid
-        assignee:
           type: string
           format: uuid

@@ -3,6 +3,7 @@ package main
 import (
 	"clean-arch-go/adapters"
 	"clean-arch-go/app"
+	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
 	"clean-arch-go/common/logs"
 	"clean-arch-go/ports"
@@ -31,10 +32,15 @@ func main() {
 }
 
 func newApplication(db *sqlx.DB, logger *logrus.Entry) app.Application {
-
+	id := adapters.NewID()
 	taskRepository := adapters.NewMysqlTaskRepository(db)
+	userRepository := adapters.NewMysqlUserRepository(db)
 
 	application := app.Application{
+		Commands: app.Commands{
+			CreateTask: command.NewCreateTaskHandler(id, taskRepository),
+			AssignTask: command.NewAssignTaskHandler(taskRepository, userRepository),
+		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),
 		},

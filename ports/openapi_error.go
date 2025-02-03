@@ -1,39 +1,27 @@
 package ports
 
 import (
-	"clean-arch-go/common/logs"
 	"net/http"
 
 	"github.com/go-chi/render"
 )
 
-func internalError(slug string, err error, w http.ResponseWriter, r *http.Request) {
-	httpRespondWithError(err, slug, w, r, "Internal server error", http.StatusInternalServerError)
+func internalError(err error, w http.ResponseWriter, r *http.Request) {
+	httpRespondWithError(err, w, r, "Internal server error", http.StatusInternalServerError)
 }
 
-func unauthorised(slug string, err error, w http.ResponseWriter, r *http.Request) {
-	httpRespondWithError(err, slug, w, r, "Unauthorised", http.StatusUnauthorized)
+func unauthorised(err error, w http.ResponseWriter, r *http.Request) {
+	httpRespondWithError(err, w, r, "Unauthorised", http.StatusUnauthorized)
 }
 
-func badRequest(slug string, err error, w http.ResponseWriter, r *http.Request) {
-	httpRespondWithError(err, slug, w, r, "Bad request", http.StatusBadRequest)
+func badRequest(err error, w http.ResponseWriter, r *http.Request) {
+	httpRespondWithError(err, w, r, "Bad request", http.StatusBadRequest)
 }
 
-func httpRespondWithError(err error, slug string, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
-	logs.GetLogEntry(r).WithError(err).WithField("error-slug", slug).Warn(logMSg)
-	resp := ErrorResponse{slug, status}
-
-	if err := render.Render(w, r, resp); err != nil {
-		panic(err)
-	}
-}
-
-type ErrorResponse struct {
-	Slug       string `json:"slug"`
-	httpStatus int
-}
-
-func (e ErrorResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	w.WriteHeader(e.httpStatus)
-	return nil
+func httpRespondWithError(err error, w http.ResponseWriter, r *http.Request, logMSg string, status int) {
+	render.Respond(w, r, map[string]any{
+		"message": logMSg,
+		"status":  status,
+		"error":   err.Error(),
+	})
 }

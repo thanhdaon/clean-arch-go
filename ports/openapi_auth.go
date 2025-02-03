@@ -2,7 +2,7 @@ package ports
 
 import (
 	"clean-arch-go/common/errors"
-	"clean-arch-go/domain/errkind"
+	"clean-arch-go/domain/user"
 	"context"
 	"net/http"
 	"strings"
@@ -26,7 +26,7 @@ func (a FirebaseAuthHttpMiddleware) Middleware(next http.Handler) http.Handler {
 
 		token, err := a.AuthClient.VerifyIDToken(ctx, bearerToken)
 		if err != nil {
-			unauthorised("unable-to-verify-jwt", err, w, r)
+			unauthorised(err, w, r)
 			return
 		}
 
@@ -62,11 +62,18 @@ const (
 	userContextKey ctxKey = "user-context-key"
 )
 
-func UserFromCtx(ctx context.Context) (User, error) {
+func userFromCtx(ctx context.Context) (user.User, error) {
+	op := errors.Op("userFromCtx")
+
 	u, ok := ctx.Value(userContextKey).(User)
-	if ok {
-		return u, nil
+	if !ok {
+		return nil, errors.E(op, "no user in context")
 	}
 
-	return User{}, errors.E(errors.Op("UserFromCtx"), errkind.Authorization, "no user in context")
+	domainUser, err := user.From(u.UUID, u.Role)
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return domainUser, errors.E(op, "no user in context")
 }

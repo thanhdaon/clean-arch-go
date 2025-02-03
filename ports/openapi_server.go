@@ -5,6 +5,7 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	firebase "firebase.google.com/go/v4"
@@ -76,6 +77,11 @@ func addCorsMiddleware(router *chi.Mux) {
 }
 
 func addAuthMiddleware(router *chi.Mux) {
+	if mockAuth, _ := strconv.ParseBool(os.Getenv("MOCK_AUTH")); mockAuth {
+		router.Use(HttpMockMiddleware)
+		return
+	}
+
 	var opts []option.ClientOption
 	if file := os.Getenv("SERVICE_ACCOUNT_FILE"); file != "" {
 		opts = append(opts, option.WithCredentialsFile(file))

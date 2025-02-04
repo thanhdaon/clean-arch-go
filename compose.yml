@@ -1,4 +1,9 @@
 services:
+  jaeger:
+    image: "jaegertracing/all-in-one:1.65.0"
+    ports:
+      - "16686:16686"
+      - "14268:14268"
   mysql:
     image: "mysql:8.4.4-oraclelinux9"
     environment:

@@ -18,7 +18,7 @@ func (d commandTracingDecorator[C]) Handle(ctx context.Context, cmd C) (err erro
 	handlerType := generateActionName(cmd)
 
 	attrs := attribute.String("body", fmt.Sprintf("%#v", cmd))
-	ctx, span := otel.Tracer("cmd").Start(ctx, handlerType, trace.WithAttributes(attrs))
+	ctx, span := otel.Tracer("").Start(ctx, handlerType, trace.WithAttributes(attrs))
 	defer span.End()
 
 	defer func() {
@@ -39,7 +39,7 @@ func (d queryTracingDecorator[C, R]) Handle(ctx context.Context, query C) (resul
 	handlerType := generateActionName(query)
 
 	attrs := attribute.String("body", fmt.Sprintf("%#v", query))
-	ctx, span := otel.Tracer("query").Start(ctx, handlerType, trace.WithAttributes(attrs))
+	ctx, span := otel.Tracer("").Start(ctx, handlerType, trace.WithAttributes(attrs))
 	defer span.End()
 
 	defer func() {

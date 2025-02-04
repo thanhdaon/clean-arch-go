@@ -1,7 +1,7 @@
 package adapters
 
 import (
-	"clean-arch-go/common/errors"
+	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/user"
 

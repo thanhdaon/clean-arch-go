@@ -1,7 +1,7 @@
 package auth
 
 import (
-	"clean-arch-go/common/errors"
+	"clean-arch-go/core/errors"
 	"fmt"
 
 	"github.com/golang-jwt/jwt/v5"

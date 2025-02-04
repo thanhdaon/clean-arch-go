@@ -5,7 +5,7 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
-	"clean-arch-go/common/logs"
+	"clean-arch-go/core/logs"
 	"clean-arch-go/ports"
 	"net/http"
 

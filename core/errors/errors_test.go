@@ -1,7 +1,7 @@
 package errors_test
 
 import (
-	"clean-arch-go/common/errors"
+	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
 	"testing"
 

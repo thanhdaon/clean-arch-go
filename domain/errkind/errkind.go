@@ -1,6 +1,6 @@
 package errkind
 
-import "clean-arch-go/common/errors"
+import "clean-arch-go/core/errors"
 
 var (
 	Other         = errors.NewKind("")

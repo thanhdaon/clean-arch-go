@@ -1,7 +1,7 @@
 package query
 
 import (
-	"clean-arch-go/common/decorator"
+	"clean-arch-go/core/decorator"
 	"clean-arch-go/domain/user"
 	"context"
 	"log"

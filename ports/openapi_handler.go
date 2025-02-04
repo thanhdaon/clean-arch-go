@@ -4,7 +4,7 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
-	"clean-arch-go/common/errors"
+	"clean-arch-go/core/errors"
 	"net/http"
 
 	"github.com/go-chi/render"

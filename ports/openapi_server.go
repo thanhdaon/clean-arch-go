@@ -1,8 +1,8 @@
 package ports
 
 import (
-	"clean-arch-go/common/auth"
-	"clean-arch-go/common/logs"
+	"clean-arch-go/core/auth"
+	"clean-arch-go/core/logs"
 	"net/http"
 	"os"
 	"strings"

@@ -2,7 +2,7 @@ package adapters
 
 import (
 	"clean-arch-go/app/query"
-	"clean-arch-go/common/errors"
+	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
 	"database/sql"
 	"os"

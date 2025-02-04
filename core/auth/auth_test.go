@@ -1,7 +1,7 @@
 package auth_test
 
 import (
-	"clean-arch-go/common/auth"
+	"clean-arch-go/core/auth"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

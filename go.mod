@@ -14,6 +14,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	github.com/swaggo/http-swagger/v2 v2.0.2
+	github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2
+	github.com/uptrace/opentelemetry-go-extra/otelsqlx v0.3.2
 	github.com/x-cray/logrus-prefixed-formatter v0.5.2
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.59.0
 	go.opentelemetry.io/otel v1.34.0

@@ -40,7 +40,7 @@ func (r MysqlUserRepository) Add(ctx context.Context, u user.User) error {
 			(:id, :role)
 	`
 
-	if _, err := r.db.NamedExec(query, added); err != nil {
+	if _, err := r.db.NamedExecContext(ctx, query, added); err != nil {
 		return errors.E(op, errkind.Internal, err)
 	}
 
@@ -84,7 +84,7 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 			role = :role
 		WHERE id = :id;
 	`
-	result, err := r.db.NamedExec(query, updated)
+	result, err := r.db.NamedExecContext(ctx, query, updated)
 	if err != nil {
 		return errors.E(op, err)
 	}

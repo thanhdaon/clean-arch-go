@@ -10,6 +10,8 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"github.com/uptrace/opentelemetry-go-extra/otelsql"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
 func NewMySQLConnection() (*sqlx.DB, error) {
@@ -23,12 +25,12 @@ func NewMySQLConnection() (*sqlx.DB, error) {
 	config.ParseTime = true // with that parameter, we can use time.Time in mysqlHour.Hour
 	config.Loc = time.UTC
 
-	db, err := sqlx.Connect("mysql", config.FormatDSN())
+	traceDB, err := otelsql.Open("mysql", config.FormatDSN(), otelsql.WithAttributes(semconv.DBSystemMySQL))
 	if err != nil {
 		return nil, errors.E(errors.Op("connect-mysql"), errkind.Connection, err)
 	}
 
-	return db, nil
+	return sqlx.NewDb(traceDB, "mysql"), nil
 }
 
 func timeToNullTime(t time.Time) sql.NullTime {

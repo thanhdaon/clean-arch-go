@@ -52,7 +52,7 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 			(:id, :title, :status, :created_by, :assigned_to, :created_at, :updated_at)
 	`
 
-	if _, err := r.db.NamedExec(query, added); err != nil {
+	if _, err := r.db.NamedExecContext(ctx, query, added); err != nil {
 		return errors.E(op, err)
 	}
 
@@ -106,7 +106,7 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 			updated_at = :updated_at
 		WHERE id = :id;
 	`
-	result, err := r.db.NamedExec(query, updated)
+	result, err := r.db.NamedExecContext(ctx, query, updated)
 	if err != nil {
 		return errors.E(op, err)
 	}

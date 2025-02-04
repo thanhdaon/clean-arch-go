@@ -38,6 +38,8 @@ func (a OpenapiAuthMiddleware) Middleware(next http.Handler) http.Handler {
 			Role: claims["user_role"].(string),
 		})
 		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
 	})
 }
 

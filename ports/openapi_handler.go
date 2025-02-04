@@ -32,6 +32,11 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 		User: user,
 	})
 
+	if err != nil {
+		internalError(errors.E(op, err), w, r)
+		return
+	}
+
 	render.Respond(w, r, tasks)
 }
 

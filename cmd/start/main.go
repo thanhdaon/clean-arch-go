@@ -6,6 +6,7 @@ import (
 	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
 	"clean-arch-go/core/logs"
+	"clean-arch-go/core/tracer"
 	"clean-arch-go/ports"
 	"net/http"
 
@@ -24,6 +25,9 @@ func main() {
 		logger.Fatalln("Can not connect to mysql", err)
 	}
 
+	shutdownTracer := tracer.SetupTracer()
+	defer shutdownTracer()
+
 	app := newApplication(mysqlDB, logger)
 
 	ports.RunHTTPServer(func(router chi.Router) http.Handler {
@@ -38,7 +42,7 @@ func newApplication(db *sqlx.DB, logger *logrus.Entry) app.Application {
 
 	application := app.Application{
 		Commands: app.Commands{
-			AddUser:          command.NewAddUserHandler(id, userRepository),
+			AddUser:          command.NewAddUserHandler(id, userRepository, logger),
 			CreateTask:       command.NewCreateTaskHandler(id, taskRepository),
 			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository),
 			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository),

@@ -12,6 +12,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/sirupsen/logrus"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
@@ -46,6 +47,8 @@ func setMiddlewares(router *chi.Mux) {
 	router.Use(middleware.RealIP)
 	router.Use(logs.NewStructuredLogger(logrus.StandardLogger()))
 	router.Use(middleware.Recoverer)
+
+	router.Use(otelhttp.NewMiddleware("tasks"))
 
 	addCorsMiddleware(router)
 	addAuthMiddleware(router)

@@ -10,7 +10,9 @@ import (
 
 func ApplyCommandDecorators[H any](handler CommandHandler[H], logger *logrus.Entry) CommandHandler[H] {
 	return commandLoggingDecorator[H]{
-		base:   handler,
+		base: commandTracingDecorator[H]{
+			base: handler,
+		},
 		logger: logger,
 	}
 }

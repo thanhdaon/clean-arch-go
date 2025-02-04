@@ -1,22 +1,27 @@
 package command
 
 import (
+	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/user"
 	"context"
 	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AddUser struct {
 	Role string
 }
 
-type AddUserHandler struct {
+type AddUserHandler decorator.CommandHandler[AddUser]
+
+type addUserHandler struct {
 	id    ID
 	users UserRepository
 }
 
-func NewAddUserHandler(id ID, userRepository UserRepository) AddUserHandler {
+func NewAddUserHandler(id ID, userRepository UserRepository, logger *logrus.Entry) AddUserHandler {
 	if id == nil {
 		log.Fatalln("nil id")
 	}
@@ -25,13 +30,15 @@ func NewAddUserHandler(id ID, userRepository UserRepository) AddUserHandler {
 		log.Fatalln("nil userRepository")
 	}
 
-	return AddUserHandler{
+	handler := addUserHandler{
 		id:    id,
 		users: userRepository,
 	}
+
+	return decorator.ApplyCommandDecorators(handler, logger)
 }
 
-func (h AddUserHandler) Handle(ctx context.Context, cmd AddUser) error {
+func (h addUserHandler) Handle(ctx context.Context, cmd AddUser) error {
 	op := errors.Op("cmd.AddUser")
 
 	domainUser, err := user.From(h.id.New(), cmd.Role)

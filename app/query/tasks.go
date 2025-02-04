@@ -4,7 +4,6 @@ import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/domain/user"
 	"context"
-	"log"
 
 	"github.com/sirupsen/logrus"
 )
@@ -26,7 +25,11 @@ type TasksReadModel interface {
 
 func NewTaskHandler(readmodel TasksReadModel, logger *logrus.Entry) TasksHandler {
 	if readmodel == nil {
-		log.Fatalln("nil readmodel")
+		logrus.Fatalln("nil readmodel")
+	}
+
+	if logger == nil {
+		logrus.Fatalln("nil logger")
 	}
 
 	handler := tasksHandler{readmodel: readmodel}

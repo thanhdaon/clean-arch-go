@@ -35,6 +35,35 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	render.Respond(w, r, tasks)
 }
 
+func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.ChangeTaskStatus")
+
+	changer, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(errors.E(op, err), w, r)
+		return
+	}
+
+	body := PutTaskStatus{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(err, w, r)
+		return
+	}
+
+	err = h.app.Commands.ChangeTaskStatus.Handle(r.Context(), command.ChangeTaskStatus{
+		TaskId:  taskId,
+		Status:  body.Status,
+		Changer: changer,
+	})
+
+	if err != nil {
+		badRequest(errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(w, r)
+}
+
 func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	op := errors.Op("http.AddUser")
 

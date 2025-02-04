@@ -38,9 +38,10 @@ func newApplication(db *sqlx.DB, logger *logrus.Entry) app.Application {
 
 	application := app.Application{
 		Commands: app.Commands{
-			CreateTask: command.NewCreateTaskHandler(id, taskRepository),
-			AssignTask: command.NewAssignTaskHandler(taskRepository, userRepository),
-			AddUser:    command.NewAddUserHandler(id, userRepository),
+			AddUser:          command.NewAddUserHandler(id, userRepository),
+			CreateTask:       command.NewCreateTaskHandler(id, taskRepository),
+			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository),
+			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository),
 		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),

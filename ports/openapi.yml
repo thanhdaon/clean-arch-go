@@ -57,8 +57,33 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/status:
+    put:
+      operationId: changeTaskStatus
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: todo
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutTaskStatus"
+      responses:
+        "200":
+          description: Task status successfully updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /tasks/{taskId}/assign/{assigneeId}:
-    post:
+    put:
       operationId: assignTask
       parameters:
         - name: taskId
@@ -129,6 +154,13 @@ components:
         role:
           type: string
           example: "employer"
+    PutTaskStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          example: "todo"
     PostTask:
       type: object
       required: [title, creator]

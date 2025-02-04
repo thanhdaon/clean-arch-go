@@ -11,9 +11,10 @@ type Application struct {
 }
 
 type Commands struct {
-	CreateTask command.CreateTaskHandler
-	AssignTask command.AssignTaskHandler
-	AddUser    command.AddUserHandler
+	AddUser          command.AddUserHandler
+	CreateTask       command.CreateTaskHandler
+	ChangeTaskStatus command.ChangeTaskStatusHandler
+	AssignTask       command.AssignTaskHandler
 }
 
 type Queries struct {

@@ -1,36 +1,43 @@
 package command
 
 import (
+	"clean-arch-go/common/errors"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
-	"errors"
 )
 
 type ChangeTaskStatus struct {
 	TaskId  string
-	Status  task.Status
+	Status  string
 	Changer user.User
 }
 
 type ChangeTaskStatusHandler struct {
-	repo TaskRepository
+	tasks TaskRepository
+}
+
+func NewChangeTaskStatusHandler(taskRepository TaskRepository) ChangeTaskStatusHandler {
+	return ChangeTaskStatusHandler{tasks: taskRepository}
 }
 
 func (h ChangeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatus) error {
-	if cmd.Changer == nil {
-		return errors.New("This command need to be authenticated")
+	op := errors.Op("cmd.ChangeTaskStatus")
+
+	status, err := task.StatusFromString(cmd.Status)
+	if err != nil {
+		return errors.E(op, err)
 	}
 
 	updateFn := func(ctx context.Context, t task.Task) (task.Task, error) {
-		if err := t.ChangeStatus(cmd.Changer, cmd.Status); err != nil {
-			return nil, err
+		if err := t.ChangeStatus(cmd.Changer, status); err != nil {
+			return nil, errors.E(errors.E("cmd.ChangeTaskStatus.updateFn"), err)
 		}
 		return t, nil
 	}
 
-	if err := h.repo.UpdateByID(ctx, cmd.TaskId, updateFn); err != nil {
-		return err
+	if err := h.tasks.UpdateByID(ctx, cmd.TaskId, updateFn); err != nil {
+		return errors.E(op, err)
 	}
 
 	return nil

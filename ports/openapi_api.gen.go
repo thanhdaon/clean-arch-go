@@ -20,8 +20,11 @@ type ServerInterface interface {
 	// (POST /tasks)
 	CreateTask(w http.ResponseWriter, r *http.Request)
 
-	// (POST /tasks/{taskId}/assign/{assigneeId})
+	// (PUT /tasks/{taskId}/assign/{assigneeId})
 	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
+
+	// (PUT /tasks/{taskId}/status)
+	ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string)
 
 	// (POST /users)
 	AddUser(w http.ResponseWriter, r *http.Request)
@@ -41,8 +44,13 @@ func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// (POST /tasks/{taskId}/assign/{assigneeId})
+// (PUT /tasks/{taskId}/assign/{assigneeId})
 func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (PUT /tasks/{taskId}/status)
+func (_ Unimplemented) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -113,6 +121,31 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AssignTask(w, r, taskId, assigneeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ChangeTaskStatus operation middleware
+func (siw *ServerInterfaceWrapper) ChangeTaskStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ChangeTaskStatus(w, r, taskId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -256,7 +289,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/tasks", wrapper.CreateTask)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)
+		r.Put(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/tasks/{taskId}/status", wrapper.ChangeTaskStatus)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/users", wrapper.AddUser)

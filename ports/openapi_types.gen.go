@@ -29,6 +29,11 @@ type PostUser struct {
 	Role string `json:"role"`
 }
 
+// PutTaskStatus defines model for PutTaskStatus.
+type PutTaskStatus struct {
+	Status string `json:"status"`
+}
+
 // Task defines model for Task.
 type Task struct {
 	AssignedTo openapi_types.UUID  `json:"assignedTo"`
@@ -42,6 +47,9 @@ type Task struct {
 
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = PostTask
+
+// ChangeTaskStatusJSONRequestBody defines body for ChangeTaskStatus for application/json ContentType.
+type ChangeTaskStatusJSONRequestBody = PutTaskStatus
 
 // AddUserJSONRequestBody defines body for AddUser for application/json ContentType.
 type AddUserJSONRequestBody = PostUser

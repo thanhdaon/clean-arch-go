@@ -21,6 +21,20 @@ Build a Task Management API with role-based access, enabling two types of users:
   - Total number of tasks assigned.
   - Number of tasks completed by each employee.
 
+## Environtment
+
+- Golang 1.23.5
+- Docker, Docker Compose
+
+## Setup
+
+- Run `docker compose up -d` to boostrap all dependencies (Mysql)
+- Run `go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest` to install `oapi-codegen` tool
+- Run `go install github.com/rubenv/sql-migrate/...@latest` to install `sql-migrate` tool
+- Run `make migration-up` to migrate the database schema
+- Run `make test` to run all test cases
+- Run `make start` to start server
+
 ## Clean Architecture
 
 ![alt text](images/image2.png)

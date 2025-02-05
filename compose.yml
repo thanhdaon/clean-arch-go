@@ -1,16 +1,16 @@
 services:
   jaeger:
     image: "jaegertracing/all-in-one:1.65.0"
+    environment:
+      - "COLLECTOR_OTLP_ENABLED=true"
     ports:
       - "16686:16686"
       - "14268:14268"
+      - "4318:4318"
   mysql:
-    image: "mysql:8.4.4-oraclelinux9"
+    image: "mysql:8.0"
     environment:
       - "MYSQL_ROOT_PASSWORD=root_password"
-      - "MYSQL_DATABASE=task"
-      - "MYSQL_USER=user"
-      - "MYSQL_PASSWORD=user_password"
     ports:
       - "3306:3306"
     volumes:

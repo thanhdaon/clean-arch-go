@@ -66,7 +66,7 @@ func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, ta
 		return
 	}
 
-	responseSuccess(w, r)
+	responseSuccess(r.Context(), w, r)
 }
 
 func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +87,7 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseSuccess(w, r)
+	responseSuccess(r.Context(), w, r)
 }
 
 func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
@@ -110,7 +110,7 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	responseSuccess(w, r)
+	responseSuccess(r.Context(), w, r)
 }
 
 func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, assigneeId string) {
@@ -129,5 +129,5 @@ func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, 
 		Assigner:   assigner,
 	})
 
-	responseSuccess(w, r)
+	responseSuccess(r.Context(), w, r)
 }

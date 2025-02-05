@@ -43,7 +43,6 @@ func setSwaggerDoc(router *chi.Mux) {
 }
 
 func setMiddlewares(router *chi.Mux) {
-	router.Use(middleware.RequestID)
 	router.Use(middleware.RealIP)
 	router.Use(logs.NewStructuredLogger(logrus.StandardLogger()))
 	router.Use(middleware.Recoverer)

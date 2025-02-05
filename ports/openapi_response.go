@@ -1,9 +1,11 @@
 package ports
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func internalError(err error, w http.ResponseWriter, r *http.Request) {
@@ -25,6 +27,9 @@ func responseError(err error, w http.ResponseWriter, r *http.Request, status int
 	})
 }
 
-func responseSuccess(w http.ResponseWriter, r *http.Request) {
-	render.Respond(w, r, map[string]any{"status": http.StatusOK})
+func responseSuccess(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	render.Respond(w, r, map[string]any{
+		"status":   http.StatusOK,
+		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
+	})
 }

@@ -11,6 +11,8 @@ type ID interface {
 	IsValid(id string) bool
 }
 
+type TaskUpdater func(context.Context, task.Task) (task.Task, error)
+
 type TaskRepository interface {
 	Add(context.Context, task.Task) error
 	UpdateByID(ctx context.Context, uuid string, updateFn TaskUpdater) error
@@ -21,4 +23,6 @@ type UserRepository interface {
 	FindById(ctx context.Context, uuid string) (user.User, error)
 }
 
-type TaskUpdater func(context.Context, task.Task) (task.Task, error)
+type VideoService interface {
+	GetAll(context.Context) error
+}

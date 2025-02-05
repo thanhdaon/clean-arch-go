@@ -20,6 +20,8 @@ func main() {
 
 	logger := logrus.NewEntry(logrus.StandardLogger())
 
+	httpclient := adapters.NewHttpClient()
+
 	mysqlDB, err := adapters.NewMySQLConnection()
 	if err != nil {
 		logger.Fatalln("Can not connect to mysql", err)
@@ -28,21 +30,22 @@ func main() {
 	shutdownTracer := tracer.SetupTracer()
 	defer shutdownTracer()
 
-	app := newApplication(mysqlDB, logger)
+	app := newApplication(mysqlDB, httpclient, logger)
 
 	ports.RunHTTPServer(func(router chi.Router) http.Handler {
 		return ports.HandlerFromMux(ports.NewHttpHandler(app), router)
 	})
 }
 
-func newApplication(db *sqlx.DB, logger *logrus.Entry) app.Application {
+func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) app.Application {
 	id := adapters.NewID()
 	taskRepository := adapters.NewMysqlTaskRepository(db)
 	userRepository := adapters.NewMysqlUserRepository(db)
+	videoService := adapters.NewVideoService(httpclient)
 
 	application := app.Application{
 		Commands: app.Commands{
-			AddUser:          command.NewAddUserHandler(id, userRepository, logger),
+			AddUser:          command.NewAddUserHandler(id, userRepository, videoService, logger),
 			CreateTask:       command.NewCreateTaskHandler(id, taskRepository),
 			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository),
 			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository),

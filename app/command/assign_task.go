@@ -1,12 +1,15 @@
 package command
 
 import (
+	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
 	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type AssignTask struct {
@@ -15,12 +18,14 @@ type AssignTask struct {
 	Assigner   user.User
 }
 
-type AssignTaskHandler struct {
+type AssignTaskHandler decorator.CommandHandler[AssignTask]
+
+type assignTaskHandler struct {
 	taskRepository TaskRepository
 	userRepository UserRepository
 }
 
-func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepository) AssignTaskHandler {
+func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepository, logger *logrus.Entry) AssignTaskHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
@@ -29,13 +34,13 @@ func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepo
 		log.Fatalln("nil userRepository")
 	}
 
-	return AssignTaskHandler{
+	return decorator.ApplyCommandDecorators(assignTaskHandler{
 		taskRepository: taskRepository,
 		userRepository: userRepository,
-	}
+	}, logger)
 }
 
-func (h AssignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
+func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
 	op := errors.Op("cmd.AssignTask")
 
 	assignee, err := h.userRepository.FindById(ctx, cmd.AssigneeId)

@@ -46,9 +46,9 @@ func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) 
 	application := app.Application{
 		Commands: app.Commands{
 			AddUser:          command.NewAddUserHandler(id, userRepository, videoService, logger),
-			CreateTask:       command.NewCreateTaskHandler(id, taskRepository),
-			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository),
-			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository),
+			CreateTask:       command.NewCreateTaskHandler(id, taskRepository, logger),
+			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository, logger),
+			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository, logger),
 		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),

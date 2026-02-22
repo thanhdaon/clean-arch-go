@@ -1,10 +1,14 @@
 package command
 
 import (
+	"clean-arch-go/core/decorator"
+	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
 	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type CreateTask struct {
@@ -12,12 +16,14 @@ type CreateTask struct {
 	Creator user.User
 }
 
-type CreateTaskHandler struct {
+type CreateTaskHandler decorator.CommandHandler[CreateTask]
+
+type createTaskHandler struct {
 	id   ID
 	repo TaskRepository
 }
 
-func NewCreateTaskHandler(id ID, repo TaskRepository) CreateTaskHandler {
+func NewCreateTaskHandler(id ID, repo TaskRepository, logger *logrus.Entry) CreateTaskHandler {
 	if id == nil {
 		log.Fatalln("nil ID")
 	}
@@ -26,20 +32,22 @@ func NewCreateTaskHandler(id ID, repo TaskRepository) CreateTaskHandler {
 		log.Fatalln("nil repo")
 	}
 
-	return CreateTaskHandler{id: id, repo: repo}
+	return decorator.ApplyCommandDecorators(createTaskHandler{id: id, repo: repo}, logger)
 }
 
-func (h CreateTaskHandler) Handle(ctx context.Context, cmd CreateTask) (err error) {
+func (h createTaskHandler) Handle(ctx context.Context, cmd CreateTask) error {
+	op := errors.Op("cmd.CreateTask")
+
 	uuid := h.id.New()
 
-	task, err := task.NewTask(cmd.Creator, uuid, cmd.Title)
+	t, err := task.NewTask(cmd.Creator, uuid, cmd.Title)
 	if err != nil {
-		return err
+		return errors.E(op, err)
 	}
 
-	if err := h.repo.Add(ctx, task); err != nil {
-		return err
+	if err := h.repo.Add(ctx, t); err != nil {
+		return errors.E(op, err)
 	}
 
-	return err
+	return nil
 }

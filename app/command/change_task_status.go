@@ -1,10 +1,14 @@
 package command
 
 import (
+	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
+	"log"
+
+	"github.com/sirupsen/logrus"
 )
 
 type ChangeTaskStatus struct {
@@ -13,15 +17,21 @@ type ChangeTaskStatus struct {
 	Changer user.User
 }
 
-type ChangeTaskStatusHandler struct {
+type ChangeTaskStatusHandler decorator.CommandHandler[ChangeTaskStatus]
+
+type changeTaskStatusHandler struct {
 	tasks TaskRepository
 }
 
-func NewChangeTaskStatusHandler(taskRepository TaskRepository) ChangeTaskStatusHandler {
-	return ChangeTaskStatusHandler{tasks: taskRepository}
+func NewChangeTaskStatusHandler(taskRepository TaskRepository, logger *logrus.Entry) ChangeTaskStatusHandler {
+	if taskRepository == nil {
+		log.Fatalln("nil taskRepository")
+	}
+
+	return decorator.ApplyCommandDecorators(changeTaskStatusHandler{tasks: taskRepository}, logger)
 }
 
-func (h ChangeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatus) error {
+func (h changeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatus) error {
 	op := errors.Op("cmd.ChangeTaskStatus")
 
 	status, err := task.StatusFromString(cmd.Status)

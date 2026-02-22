@@ -6,7 +6,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"
@@ -21,9 +21,11 @@ func SetupTracer() func() {
 		logrus.Fatalln("Missing JAEGER_ENDPOINT env")
 	}
 
-	exporter, err := jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint(jaegerEndpoint)))
+	exporter, err := otlptracehttp.New(ctx,
+		otlptracehttp.WithEndpointURL(jaegerEndpoint),
+	)
 	if err != nil {
-		logrus.Fatalf("Failed to create Jaeger exporter: %v", err)
+		logrus.Fatalf("Failed to create OTLP HTTP exporter: %v", err)
 	}
 
 	resource := resource.NewWithAttributes(

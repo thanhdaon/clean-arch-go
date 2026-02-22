@@ -25,6 +25,9 @@ func SetFormatter(logger *logrus.Logger) {
 	if isLocalEnv, _ := strconv.ParseBool(os.Getenv("LOCAL_ENV")); isLocalEnv {
 		logger.SetFormatter(&prefixed.TextFormatter{
 			ForceFormatting: true,
+			ForceColors:     true,
+			FullTimestamp:   true,
+			TimestampFormat: "15:04:05",
 		})
 	}
 }

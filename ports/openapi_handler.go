@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type HttpHandler struct {
@@ -24,7 +25,7 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 
 	user, err := userFromCtx(ctx)
 	if err != nil {
-		unauthorised(errors.E(op, err), w, r)
+		unauthorised(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -33,11 +34,15 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		internalError(errors.E(op, err), w, r)
+		internalError(ctx, errors.E(op, err), w, r)
 		return
 	}
 
-	render.Respond(w, r, tasks)
+	render.Respond(w, r, map[string]any{
+		"status":   http.StatusOK,
+		"tasks":    tasks,
+		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
+	})
 }
 
 func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string) {
@@ -45,13 +50,13 @@ func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, ta
 
 	changer, err := userFromCtx(r.Context())
 	if err != nil {
-		unauthorised(errors.E(op, err), w, r)
+		unauthorised(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
 	body := PutTaskStatus{}
 	if err := render.Decode(r, &body); err != nil {
-		badRequest(err, w, r)
+		badRequest(r.Context(), err, w, r)
 		return
 	}
 
@@ -62,7 +67,7 @@ func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, ta
 	})
 
 	if err != nil {
-		badRequest(errors.E(op, err), w, r)
+		badRequest(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -74,7 +79,7 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 
 	body := PostUser{}
 	if err := render.Decode(r, &body); err != nil {
-		badRequest(err, w, r)
+		badRequest(r.Context(), err, w, r)
 		return
 	}
 
@@ -83,7 +88,7 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		badRequest(errors.E(op, err), w, r)
+		badRequest(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -96,7 +101,7 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	user, err := userFromCtx(ctx)
 	if err != nil {
-		unauthorised(errors.E(op, err), w, r)
+		unauthorised(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -106,7 +111,7 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		badRequest(errors.E(op, err), w, r)
+		badRequest(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -119,7 +124,7 @@ func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, 
 
 	assigner, err := userFromCtx(ctx)
 	if err != nil {
-		unauthorised(errors.E(op, err), w, r)
+		unauthorised(ctx, errors.E(op, err), w, r)
 		return
 	}
 

@@ -34,10 +34,12 @@ func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepo
 		log.Fatalln("nil userRepository")
 	}
 
-	return decorator.ApplyCommandDecorators(assignTaskHandler{
+	handler := assignTaskHandler{
 		taskRepository: taskRepository,
 		userRepository: userRepository,
-	}, logger)
+	}
+
+	return decorator.ApplyCommandDecorators(handler, logger)
 }
 
 func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {

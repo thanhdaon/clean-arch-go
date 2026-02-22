@@ -32,7 +32,12 @@ func NewCreateTaskHandler(id ID, repo TaskRepository, logger *logrus.Entry) Crea
 		log.Fatalln("nil repo")
 	}
 
-	return decorator.ApplyCommandDecorators(createTaskHandler{id: id, repo: repo}, logger)
+	handler := createTaskHandler{
+		id:   id,
+		repo: repo,
+	}
+
+	return decorator.ApplyCommandDecorators(handler, logger)
 }
 
 func (h createTaskHandler) Handle(ctx context.Context, cmd CreateTask) error {

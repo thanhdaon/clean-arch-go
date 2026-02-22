@@ -28,7 +28,11 @@ func NewChangeTaskStatusHandler(taskRepository TaskRepository, logger *logrus.En
 		log.Fatalln("nil taskRepository")
 	}
 
-	return decorator.ApplyCommandDecorators(changeTaskStatusHandler{tasks: taskRepository}, logger)
+	handler := changeTaskStatusHandler{
+		tasks: taskRepository,
+	}
+
+	return decorator.ApplyCommandDecorators(handler, logger)
 }
 
 func (h changeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatus) error {

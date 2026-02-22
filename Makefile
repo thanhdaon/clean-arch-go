@@ -23,4 +23,3 @@ migration-new:
 
 migration-up:
 	sql-migrate up -config=migrations/dbconfig.yml -env="development"
-

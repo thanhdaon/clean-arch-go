@@ -1,5 +1,5 @@
 development:
   dialect: mysql
-  datasource: root:root_password@tcp(localhost:3306)/tasks?parseTime=true
+  datasource: root:root_password@tcp(localhost:3306)/clean-arch-go?parseTime=true
   dir: migrations
   table: migrations

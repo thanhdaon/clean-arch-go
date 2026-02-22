@@ -1,16 +1,17 @@
 services:
   jaeger:
-    image: "jaegertracing/all-in-one:1.65.0"
-    environment:
-      - "COLLECTOR_OTLP_ENABLED=true"
+    image: "jaegertracing/jaeger:2.14.1"
+    volumes:
+      - "/etc/localtime:/etc/localtime:ro"
     ports:
       - "16686:16686"
-      - "14268:14268"
       - "4318:4318"
+
   mysql:
     image: "mysql:8.0"
     environment:
       - "MYSQL_ROOT_PASSWORD=root_password"
+      - "MYSQL_DATABASE=clean-arch-go"
     ports:
       - "3306:3306"
     volumes:

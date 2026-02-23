@@ -501,29 +501,29 @@ components:
   - [x] Update `ports/openapi_handler.go`
   - [x] Update `app/app.go` to register command
 
-- [ ] Phase 3: ReopenTask + Status Transitions
-  - [ ] Add transition validation to `domain/task/status.go`
-  - [ ] Add `Reopen` method to `domain/task/task.go`
-  - [ ] Update `ChangeStatus` to validate transitions
-  - [ ] Create `app/command/reopen_task.go`
-  - [ ] Update `ports/openapi.yml`
-  - [ ] Update `ports/openapi_handler.go`
-  - [ ] Update `app/app.go` to register command
+- [x] Phase 3: ReopenTask + Status Transitions
+  - [x] Add transition validation to `domain/task/status.go`
+  - [x] Add `Reopen` method to `domain/task/task.go`
+  - [x] Update `ChangeStatus` to validate transitions
+  - [x] Create `app/command/reopen_task.go`
+  - [x] Update `ports/openapi.yml`
+  - [x] Update `ports/openapi_handler.go`
+  - [x] Update `app/app.go` to register command
 
-- [ ] Phase 4: DeleteTask
-  - [ ] Create migration `migrations/3-add-deleted-at-to-tasks.sql`
-  - [ ] Add `deletedAt` field and methods to `domain/task/task.go`
-  - [ ] Update `adapters/mysql_task_repository.go` to filter deleted
-  - [ ] Create `app/command/delete_task.go`
-  - [ ] Update `ports/openapi.yml`
-  - [ ] Update `ports/openapi_handler.go`
-  - [ ] Update `app/app.go` to register command
+- [x] Phase 4: DeleteTask
+  - [x] Create migration `migrations/3-add-deleted-at-to-tasks.sql`
+  - [x] Add `deletedAt` field and methods to `domain/task/task.go`
+  - [x] Update `adapters/mysql_task_repository.go` to filter deleted
+  - [x] Create `app/command/delete_task.go`
+  - [x] Update `ports/openapi.yml`
+  - [x] Update `ports/openapi_handler.go`
+  - [x] Update `app/app.go` to register command
 
-- [ ] Phase 5: ArchiveTask
-  - [ ] Create migration `migrations/4-add-archived-at-to-tasks.sql`
-  - [ ] Add `archivedAt` field and methods to `domain/task/task.go`
-  - [ ] Update `adapters/mysql_task_repository.go` to filter archived
-  - [ ] Create `app/command/archive_task.go`
-  - [ ] Update `ports/openapi.yml`
-  - [ ] Update `ports/openapi_handler.go`
-  - [ ] Update `app/app.go` to register command
+- [x] Phase 5: ArchiveTask
+  - [x] Create migration `migrations/4-add-archived-at-to-tasks.sql`
+  - [x] Add `archivedAt` field and methods to `domain/task/task.go`
+  - [x] Update `adapters/mysql_task_repository.go` to filter archived
+  - [x] Create `app/command/archive_task.go`
+  - [x] Update `ports/openapi.yml`
+  - [x] Update `ports/openapi_handler.go`
+  - [x] Update `app/app.go` to register command

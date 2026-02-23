@@ -64,9 +64,9 @@ func TestChangeStatus(t *testing.T) {
 	creator, _ := user.NewUser("123", user.RoleEmployer)
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
-	err := tk.ChangeStatus(creator, task.StatusCompleted)
+	err := tk.ChangeStatus(creator, task.StatusInProgress)
 	require.NoError(t, err)
-	require.Equal(t, task.StatusCompleted, tk.Status())
+	require.Equal(t, task.StatusInProgress, tk.Status())
 }
 
 func TestChangeStatus_InvalidUser(t *testing.T) {
@@ -76,7 +76,7 @@ func TestChangeStatus_InvalidUser(t *testing.T) {
 	otherUser, _ := user.NewUser("456", user.RoleEmployee)
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
-	err := tk.ChangeStatus(otherUser, task.StatusCompleted)
+	err := tk.ChangeStatus(otherUser, task.StatusInProgress)
 	require.Error(t, err)
 	require.EqualError(t, err, "user is not allow to update status of this task")
 }
@@ -103,4 +103,77 @@ func TestAssignTo_InvalidAssignee(t *testing.T) {
 	err := tk.AssignTo(assigner, assignee)
 	require.Error(t, err)
 	require.EqualError(t, err, "only employer role can assign task")
+}
+
+func TestChangeStatus_ValidTransitions(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer)
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.ChangeStatus(creator, task.StatusPending)
+	require.NoError(t, err)
+	require.Equal(t, task.StatusPending, tk.Status())
+
+	err = tk.ChangeStatus(creator, task.StatusInProgress)
+	require.NoError(t, err)
+	require.Equal(t, task.StatusInProgress, tk.Status())
+
+	err = tk.ChangeStatus(creator, task.StatusCompleted)
+	require.NoError(t, err)
+	require.Equal(t, task.StatusCompleted, tk.Status())
+}
+
+func TestChangeStatus_InvalidTransition(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer)
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.ChangeStatus(creator, task.StatusCompleted)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "cannot transition")
+}
+
+func TestReopen(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer)
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	tk.ChangeStatus(creator, task.StatusPending)
+	tk.ChangeStatus(creator, task.StatusInProgress)
+	tk.ChangeStatus(creator, task.StatusCompleted)
+	require.Equal(t, task.StatusCompleted, tk.Status())
+
+	err := tk.Reopen(creator)
+	require.NoError(t, err)
+	require.Equal(t, task.StatusInProgress, tk.Status())
+}
+
+func TestReopen_NotCompleted(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer)
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.Reopen(creator)
+	require.Error(t, err)
+	require.EqualError(t, err, "only completed tasks can be reopened")
+}
+
+func TestReopen_InvalidUser(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer)
+	otherUser, _ := user.NewUser("456", user.RoleEmployee)
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	tk.ChangeStatus(creator, task.StatusPending)
+	tk.ChangeStatus(creator, task.StatusInProgress)
+	tk.ChangeStatus(creator, task.StatusCompleted)
+
+	err := tk.Reopen(otherUser)
+	require.Error(t, err)
+	require.EqualError(t, err, "user is not allowed to reopen this task")
 }

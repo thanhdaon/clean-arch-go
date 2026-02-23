@@ -187,3 +187,25 @@ func (h HttpHandler) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, tas
 
 	responseSuccess(r.Context(), w, r)
 }
+
+func (h HttpHandler) ReopenTask(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.ReopenTask")
+
+	caller, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	err = h.app.Commands.ReopenTask.Handle(r.Context(), command.ReopenTask{
+		TaskId: taskId,
+		Caller: caller,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}

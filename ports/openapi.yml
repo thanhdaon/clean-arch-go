@@ -157,6 +157,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/reopen:
+    put:
+      operationId: reopenTask
+      summary: Reopen a completed task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task successfully reopened
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:

@@ -3,6 +3,7 @@ package task
 import (
 	"clean-arch-go/domain/user"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -18,6 +19,7 @@ type Task interface {
 	ChangeStatus(user.User, Status) error
 	AssignTo(assigner user.User, assignee user.User) error
 	Unassign(remover user.User) error
+	Reopen(opener user.User) error
 }
 
 type task struct {
@@ -65,6 +67,9 @@ func (t *task) UpdatedAt() time.Time {
 func (t *task) ChangeStatus(updater user.User, s Status) error {
 	if s.IsZero() {
 		return errors.New("cannot update status of task to empty")
+	}
+	if !t.status.CanTransitionTo(s) {
+		return fmt.Errorf("cannot transition from %s to %s", t.status, s)
 	}
 
 	if allow := t.allowToChangeStatus(updater); !allow {
@@ -135,6 +140,18 @@ func (t *task) Unassign(remover user.User) error {
 	t.assignedTo = ""
 	t.updatedAt = time.Now()
 
+	return nil
+}
+
+func (t *task) Reopen(opener user.User) error {
+	if t.status != StatusCompleted {
+		return errors.New("only completed tasks can be reopened")
+	}
+	if !t.allowToChangeStatus(opener) {
+		return errors.New("user is not allowed to reopen this task")
+	}
+	t.status = StatusInProgress
+	t.updatedAt = time.Now()
 	return nil
 }
 

@@ -125,6 +125,8 @@ func newExampleTask(t *testing.T, creator user.User) task.Task {
 func newUpdatedTask(t *testing.T, creator user.User) task.Task {
 	newTask, err := task.NewTask(creator, adapters.NewID().New(), "updated task")
 	require.NoError(t, err)
+	err = newTask.ChangeStatus(creator, task.StatusInProgress)
+	require.NoError(t, err)
 	err = newTask.ChangeStatus(creator, task.StatusCompleted)
 	require.NoError(t, err)
 	return newTask

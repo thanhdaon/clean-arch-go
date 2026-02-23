@@ -17,6 +17,7 @@ type Commands struct {
 	AssignTask       command.AssignTaskHandler
 	UpdateTaskTitle  command.UpdateTaskTitleHandler
 	UnassignTask     command.UnassignTaskHandler
+	ReopenTask       command.ReopenTaskHandler
 }
 
 type Queries struct {

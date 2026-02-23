@@ -50,6 +50,8 @@ func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) 
 			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository, logger),
 			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository, logger),
 			UpdateTaskTitle:  command.NewUpdateTaskTitleHandler(taskRepository, logger),
+			UnassignTask:     command.NewUnassignTaskHandler(taskRepository, logger),
+			ReopenTask:       command.NewReopenTaskHandler(taskRepository, logger),
 		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),

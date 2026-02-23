@@ -36,3 +36,23 @@ func StatusFromString(s string) (Status, error) {
 		return StatusUnknow, errors.New("unknow status: " + s)
 	}
 }
+
+var validTransitions = map[Status][]Status{
+	StatusTodo:       {StatusPending, StatusInProgress},
+	StatusPending:    {StatusTodo, StatusInProgress},
+	StatusInProgress: {StatusCompleted, StatusPending},
+	StatusCompleted:  {},
+}
+
+func (s Status) CanTransitionTo(target Status) bool {
+	allowed, exists := validTransitions[s]
+	if !exists {
+		return false
+	}
+	for _, t := range allowed {
+		if t == target {
+			return true
+		}
+	}
+	return false
+}

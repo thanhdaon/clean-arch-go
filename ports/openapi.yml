@@ -225,10 +225,11 @@ components:
         code:
           type: integer
           format: int32
-          example: 500
+          example: 404
           description: Error code
         message:
           type: string
+          example: "Task not found"
           description: Error message
     Task:
       type: object
@@ -238,52 +239,60 @@ components:
         id:
           type: string
           format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
         title:
           type: string
-          example: Mariusz Pudzianowski
+          example: "Review API documentation"
         status:
           type: string
-          example: todo
+          example: "in_progress"
         createdBy:
           type: string
           format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
         assignedTo:
           type: string
           format: uuid
+          example: "987e6543-e21b-45d6-b789-123456789012"
         createdAt:
           type: string
           format: date-time
+          example: "2024-01-15T09:30:00Z"
         updatedAt:
           type: string
           format: date-time
+          example: "2024-01-15T14:45:00Z"
     PostUser:
       type: object
       required: [role]
       properties:
         role:
           type: string
-          example: "employer"
+          example: "admin"
+          enum: [admin, employer, employee]
     PutTaskStatus:
       type: object
       required: [status]
       properties:
         status:
           type: string
-          example: "todo"
+          example: "in_progress"
+          enum: [todo, in_progress, done]
     PatchTaskTitle:
       type: object
       required: [title]
       properties:
         title:
           type: string
-          example: "Updated task title"
+          example: "Fix authentication bug in login flow"
     PostTask:
       type: object
       required: [title, creator]
       properties:
         title:
           type: string
-          example: "let's do leg day!"
+          example: "Implement user authentication"
         creator:
           type: string
           format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"

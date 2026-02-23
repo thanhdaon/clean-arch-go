@@ -24,6 +24,9 @@ type Task interface {
 	IsDeleted() bool
 	DeletedAt() time.Time
 	Delete(deleter user.User) error
+	IsArchived() bool
+	ArchivedAt() time.Time
+	Archive(archiver user.User) error
 }
 
 type task struct {
@@ -36,9 +39,10 @@ type task struct {
 	createdBy  string
 	assignedTo string
 
-	createdAt time.Time
-	updatedAt time.Time
-	deletedAt sql.NullTime
+	createdAt  time.Time
+	updatedAt  time.Time
+	deletedAt  sql.NullTime
+	archivedAt sql.NullTime
 }
 
 func (t *task) UUID() string {
@@ -183,6 +187,29 @@ func (t *task) Delete(deleter user.User) error {
 	return nil
 }
 
+func (t *task) IsArchived() bool {
+	return t.archivedAt.Valid
+}
+
+func (t *task) ArchivedAt() time.Time {
+	if t.archivedAt.Valid {
+		return t.archivedAt.Time
+	}
+	return time.Time{}
+}
+
+func (t *task) Archive(archiver user.User) error {
+	if archiver.Role() != user.RoleEmployer {
+		return errors.New("only employer can archive task")
+	}
+	if t.status != StatusCompleted {
+		return errors.New("only completed tasks can be archived")
+	}
+	t.archivedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	t.updatedAt = time.Now()
+	return nil
+}
+
 func NewTask(creator user.User, uuid, title string) (Task, error) {
 	if role := creator.Role(); role != user.RoleEmployer {
 		return nil, errors.New("only employ can create task")
@@ -205,7 +232,7 @@ func NewTask(creator user.User, uuid, title string) (Task, error) {
 	}, nil
 }
 
-func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time, deletedAt sql.NullTime) (Task, error) {
+func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time, deletedAt, archivedAt sql.NullTime) (Task, error) {
 	status, err := StatusFromString(statusString)
 	if err != nil {
 		return nil, err
@@ -220,5 +247,6 @@ func From(id, title, statusString, createdBy, assignedTo string, createdAt, upda
 		createdAt:  createdAt,
 		updatedAt:  updatedAt,
 		deletedAt:  deletedAt,
+		archivedAt: archivedAt,
 	}, nil
 }

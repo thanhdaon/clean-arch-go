@@ -53,6 +53,7 @@ func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) 
 			UnassignTask:     command.NewUnassignTaskHandler(taskRepository, logger),
 			ReopenTask:       command.NewReopenTaskHandler(taskRepository, logger),
 			DeleteTask:       command.NewDeleteTaskHandler(taskRepository, logger),
+			ArchiveTask:      command.NewArchiveTaskHandler(taskRepository, logger),
 		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),

@@ -231,3 +231,25 @@ func (h HttpHandler) DeleteTask(w http.ResponseWriter, r *http.Request, taskId s
 
 	responseSuccess(r.Context(), w, r)
 }
+
+func (h HttpHandler) ArchiveTask(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.ArchiveTask")
+
+	caller, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	err = h.app.Commands.ArchiveTask.Handle(r.Context(), command.ArchiveTask{
+		TaskId: taskId,
+		Caller: caller,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}

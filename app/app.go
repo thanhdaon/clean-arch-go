@@ -19,6 +19,7 @@ type Commands struct {
 	UnassignTask     command.UnassignTaskHandler
 	ReopenTask       command.ReopenTaskHandler
 	DeleteTask       command.DeleteTaskHandler
+	ArchiveTask      command.ArchiveTaskHandler
 }
 
 type Queries struct {

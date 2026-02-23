@@ -9,16 +9,17 @@ paths:
   /users:
     post:
       operationId: addUser
+      summary: Create a new user
       requestBody:
-        description: todo
+        description: User creation payload containing role and user details
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/PostUser"
+             schema:
+               $ref: "#/components/schemas/PostUser"
       responses:
         "201":
-          description: todo
+          description: User successfully created
         default:
           description: unexpected error
           content:
@@ -28,9 +29,10 @@ paths:
   /tasks:
     get:
       operationId: getTasks
+      summary: Retrieve all tasks
       responses:
         "200":
-          description: todo
+          description: Tasks retrieved successfully
           content:
             application/json:
               schema:
@@ -43,16 +45,17 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       operationId: createTask
+      summary: Create a new task
       requestBody:
-        description: todo
+        description: Task creation payload containing title and creator
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/PostTask"
+             schema:
+               $ref: "#/components/schemas/PostTask"
       responses:
         "201":
-          description: todo
+          description: Task successfully created
         default:
           description: unexpected error
           content:
@@ -62,6 +65,7 @@ paths:
   /tasks/{taskId}/status:
     put:
       operationId: changeTaskStatus
+      summary: Update task status
       parameters:
         - name: taskId
           in: path
@@ -69,12 +73,12 @@ paths:
           schema:
             type: string
       requestBody:
-        description: todo
+        description: Task status update payload
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/PutTaskStatus"
+             schema:
+               $ref: "#/components/schemas/PutTaskStatus"
       responses:
         "200":
           description: Task status successfully updated
@@ -87,6 +91,7 @@ paths:
   /tasks/{taskId}:
     patch:
       operationId: updateTaskTitle
+      summary: Update task title
       parameters:
         - name: taskId
           in: path
@@ -94,7 +99,7 @@ paths:
           schema:
             type: string
       requestBody:
-        description: todo
+        description: Task title update payload
         required: true
         content:
           application/json:
@@ -102,7 +107,7 @@ paths:
               $ref: "#/components/schemas/PatchTaskTitle"
       responses:
         "200":
-          description: Task title updated
+          description: Task title successfully updated
         default:
           description: unexpected error
           content:
@@ -112,6 +117,7 @@ paths:
   /tasks/{taskId}/assign/{assigneeId}:
     put:
       operationId: assignTask
+      summary: Assign task to a user
       parameters:
         - name: taskId
           in: path
@@ -125,7 +131,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Task successfully assigned
+          description: Task successfully assigned to the specified user
         default:
           description: unexpected error
           content:
@@ -135,6 +141,7 @@ paths:
   /tasks/{taskId}/assign:
     delete:
       operationId: unassignTask
+      summary: Unassign task from current user
       parameters:
         - name: taskId
           in: path
@@ -143,7 +150,7 @@ paths:
             type: string
       responses:
         "200":
-          description: Task unassigned
+          description: Task successfully unassigned from current user
         default:
           description: unexpected error
           content:

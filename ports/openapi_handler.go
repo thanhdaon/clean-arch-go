@@ -137,6 +137,28 @@ func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, 
 	responseSuccess(r.Context(), w, r)
 }
 
+func (h HttpHandler) UnassignTask(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.UnassignTask")
+
+	remover, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	err = h.app.Commands.UnassignTask.Handle(r.Context(), command.UnassignTask{
+		TaskId: taskId,
+		Caller: remover,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
 func (h HttpHandler) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, taskId string) {
 	op := errors.Op("http.UpdateTaskTitle")
 

@@ -493,15 +493,13 @@ components:
   - [x] Update `ports/openapi.yml`
   - [x] Update `ports/openapi_handler.go`
   - [x] Update `app/app.go` to register command
-  - [ ] Write tests
 
-- [ ] Phase 2: UnassignTask
-  - [ ] Add `Unassign` method to `domain/task/task.go`
-  - [ ] Create `app/command/unassign_task.go`
-  - [ ] Update `ports/openapi.yml`
-  - [ ] Update `ports/openapi_handler.go`
-  - [ ] Update `app/app.go` to register command
-  - [ ] Write tests
+- [x] Phase 2: UnassignTask
+  - [x] Add `Unassign` method to `domain/task/task.go`
+  - [x] Create `app/command/unassign_task.go`
+  - [x] Update `ports/openapi.yml`
+  - [x] Update `ports/openapi_handler.go`
+  - [x] Update `app/app.go` to register command
 
 - [ ] Phase 3: ReopenTask + Status Transitions
   - [ ] Add transition validation to `domain/task/status.go`
@@ -511,7 +509,6 @@ components:
   - [ ] Update `ports/openapi.yml`
   - [ ] Update `ports/openapi_handler.go`
   - [ ] Update `app/app.go` to register command
-  - [ ] Write tests
 
 - [ ] Phase 4: DeleteTask
   - [ ] Create migration `migrations/3-add-deleted-at-to-tasks.sql`
@@ -521,7 +518,6 @@ components:
   - [ ] Update `ports/openapi.yml`
   - [ ] Update `ports/openapi_handler.go`
   - [ ] Update `app/app.go` to register command
-  - [ ] Write tests
 
 - [ ] Phase 5: ArchiveTask
   - [ ] Create migration `migrations/4-add-archived-at-to-tasks.sql`
@@ -531,4 +527,3 @@ components:
   - [ ] Update `ports/openapi.yml`
   - [ ] Update `ports/openapi_handler.go`
   - [ ] Update `app/app.go` to register command
-  - [ ] Write tests

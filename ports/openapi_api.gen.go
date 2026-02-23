@@ -23,6 +23,9 @@ type ServerInterface interface {
 	// (PATCH /tasks/{taskId})
 	UpdateTaskTitle(w http.ResponseWriter, r *http.Request, taskId string)
 
+	// (DELETE /tasks/{taskId}/assign)
+	UnassignTask(w http.ResponseWriter, r *http.Request, taskId string)
+
 	// (PUT /tasks/{taskId}/assign/{assigneeId})
 	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
 
@@ -49,6 +52,11 @@ func (_ Unimplemented) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 // (PATCH /tasks/{taskId})
 func (_ Unimplemented) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (DELETE /tasks/{taskId}/assign)
+func (_ Unimplemented) UnassignTask(w http.ResponseWriter, r *http.Request, taskId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -120,6 +128,31 @@ func (siw *ServerInterfaceWrapper) UpdateTaskTitle(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateTaskTitle(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnassignTask operation middleware
+func (siw *ServerInterfaceWrapper) UnassignTask(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnassignTask(w, r, taskId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -323,6 +356,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/tasks/{taskId}", wrapper.UpdateTaskTitle)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/tasks/{taskId}/assign", wrapper.UnassignTask)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)

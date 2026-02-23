@@ -17,6 +17,7 @@ type Task interface {
 	UpdateTitle(user.User, string) error
 	ChangeStatus(user.User, Status) error
 	AssignTo(assigner user.User, assignee user.User) error
+	Unassign(remover user.User) error
 }
 
 type task struct {
@@ -121,6 +122,17 @@ func (t *task) AssignTo(assigner user.User, assignee user.User) error {
 	}
 
 	t.assignedTo = assignee.UUID()
+	t.updatedAt = time.Now()
+
+	return nil
+}
+
+func (t *task) Unassign(remover user.User) error {
+	if remover.Role() != user.RoleEmployer {
+		return errors.New("only employer can unassign task")
+	}
+
+	t.assignedTo = ""
 	t.updatedAt = time.Now()
 
 	return nil

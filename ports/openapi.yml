@@ -8,6 +8,8 @@ servers:
 paths:
   /users:
     get:
+      tags:
+        - Users
       operationId: listUsers
       summary: Get all users
       responses:
@@ -26,6 +28,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     post:
+      tags:
+        - Users
       operationId: addUser
       summary: Create a new user
       requestBody:
@@ -46,6 +50,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /users/{userId}:
     get:
+      tags:
+        - Users
       operationId: getUser
       summary: Get a specific user
       parameters:
@@ -68,6 +74,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     delete:
+      tags:
+        - Users
       operationId: deleteUser
       summary: Delete a user (soft delete)
       parameters:
@@ -86,6 +94,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     patch:
+      tags:
+        - Users
       operationId: updateUserProfile
       summary: Update user profile
       parameters:
@@ -112,6 +122,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /users/{userId}/role:
     put:
+      tags:
+        - Users
       operationId: updateUserRole
       summary: Update user role (admin only)
       parameters:
@@ -138,6 +150,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /auth/login:
     post:
+      tags:
+        - Authentication
       operationId: login
       summary: User login
       requestBody:
@@ -162,6 +176,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks:
     get:
+      tags:
+        - Tasks
       operationId: getTasks
       summary: Retrieve all tasks
       responses:
@@ -178,6 +194,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     post:
+      tags:
+        - Tasks
       operationId: createTask
       summary: Create a new task
       requestBody:
@@ -198,6 +216,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}/status:
     put:
+      tags:
+        - Tasks
       operationId: changeTaskStatus
       summary: Update task status
       parameters:
@@ -224,6 +244,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}:
     patch:
+      tags:
+        - Tasks
       operationId: updateTaskTitle
       summary: Update task title
       parameters:
@@ -249,6 +271,8 @@ paths:
               schema:
                 $ref: "#/components/schemas/Error"
     delete:
+      tags:
+        - Tasks
       operationId: deleteTask
       summary: Delete a task
       parameters:
@@ -268,6 +292,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}/assign/{assigneeId}:
     put:
+      tags:
+        - Tasks
       operationId: assignTask
       summary: Assign task to a user
       parameters:
@@ -292,6 +318,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}/assign:
     delete:
+      tags:
+        - Tasks
       operationId: unassignTask
       summary: Unassign task from current user
       parameters:
@@ -311,6 +339,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}/reopen:
     put:
+      tags:
+        - Tasks
       operationId: reopenTask
       summary: Reopen a completed task
       parameters:
@@ -330,6 +360,8 @@ paths:
                 $ref: "#/components/schemas/Error"
   /tasks/{taskId}/archive:
     put:
+      tags:
+        - Tasks
       operationId: archiveTask
       summary: Archive a task
       parameters:

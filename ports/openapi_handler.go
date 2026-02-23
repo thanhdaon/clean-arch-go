@@ -136,3 +136,32 @@ func (h HttpHandler) AssignTask(w http.ResponseWriter, r *http.Request, taskId, 
 
 	responseSuccess(r.Context(), w, r)
 }
+
+func (h HttpHandler) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.UpdateTaskTitle")
+
+	updater, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PatchTaskTitle{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	err = h.app.Commands.UpdateTaskTitle.Handle(r.Context(), command.UpdateTaskTitle{
+		TaskId:  taskId,
+		Title:   body.Title,
+		Updater: updater,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}

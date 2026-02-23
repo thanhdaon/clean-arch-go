@@ -33,7 +33,7 @@ func (a OpenapiAuthMiddleware) Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(r.Context(), userContextKey, User{
+		ctx = context.WithValue(r.Context(), userContextKey, AuthUser{
 			UUID: claims["user_uuid"].(string),
 			Role: claims["user_role"].(string),
 		})
@@ -53,7 +53,7 @@ func (a OpenapiAuthMiddleware) tokenFromHeader(r *http.Request) string {
 	return ""
 }
 
-type User struct {
+type AuthUser struct {
 	UUID string
 	Role string
 }
@@ -67,12 +67,12 @@ const (
 func userFromCtx(ctx context.Context) (user.User, error) {
 	op := errors.Op("userFromCtx")
 
-	u, ok := ctx.Value(userContextKey).(User)
+	u, ok := ctx.Value(userContextKey).(AuthUser)
 	if !ok {
 		return nil, errors.E(op, "no user in context")
 	}
 
-	domainUser, err := user.From(u.UUID, u.Role)
+	domainUser, err := user.From(u.UUID, u.Role, "", "", "")
 	if err != nil {
 		return nil, errors.E(op, err)
 	}

@@ -11,7 +11,10 @@ import (
 )
 
 type AddUser struct {
-	Role string
+	Role     string
+	Name     string
+	Email    string
+	Password string
 }
 
 type AddUserHandler decorator.CommandHandler[AddUser]
@@ -47,7 +50,12 @@ func NewAddUserHandler(id ID, userRepository UserRepository, videoService VideoS
 func (h addUserHandler) Handle(ctx context.Context, cmd AddUser) error {
 	op := errors.Op("cmd.AddUser")
 
-	domainUser, err := user.From(h.id.New(), cmd.Role)
+	hashedPassword, err := user.HashPassword(cmd.Password)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	domainUser, err := user.From(h.id.New(), cmd.Role, cmd.Name, cmd.Email, hashedPassword)
 	if err != nil {
 		return errors.E(op, err)
 	}

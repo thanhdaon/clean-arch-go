@@ -9,6 +9,34 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for PostUserRole.
+const (
+	PostUserRoleAdmin    PostUserRole = "admin"
+	PostUserRoleEmployee PostUserRole = "employee"
+	PostUserRoleEmployer PostUserRole = "employer"
+)
+
+// Defines values for PutTaskStatusStatus.
+const (
+	Done       PutTaskStatusStatus = "done"
+	InProgress PutTaskStatusStatus = "in_progress"
+	Todo       PutTaskStatusStatus = "todo"
+)
+
+// Defines values for PutUserRoleRole.
+const (
+	PutUserRoleRoleAdmin    PutUserRoleRole = "admin"
+	PutUserRoleRoleEmployee PutUserRoleRole = "employee"
+	PutUserRoleRoleEmployer PutUserRoleRole = "employer"
+)
+
+// Defines values for UserRole.
+const (
+	Admin    UserRole = "admin"
+	Employee UserRole = "employee"
+	Employer UserRole = "employer"
+)
+
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -18,9 +46,27 @@ type Error struct {
 	Message string `json:"message"`
 }
 
+// LoginRequest defines model for LoginRequest.
+type LoginRequest struct {
+	Email    openapi_types.Email `json:"email"`
+	Password string              `json:"password"`
+}
+
+// LoginResponse defines model for LoginResponse.
+type LoginResponse struct {
+	Token *string `json:"token,omitempty"`
+	User  *User   `json:"user,omitempty"`
+}
+
 // PatchTaskTitle defines model for PatchTaskTitle.
 type PatchTaskTitle struct {
 	Title string `json:"title"`
+}
+
+// PatchUser defines model for PatchUser.
+type PatchUser struct {
+	Email *openapi_types.Email `json:"email,omitempty"`
+	Name  *string              `json:"name,omitempty"`
 }
 
 // PostTask defines model for PostTask.
@@ -31,13 +77,30 @@ type PostTask struct {
 
 // PostUser defines model for PostUser.
 type PostUser struct {
-	Role string `json:"role"`
+	Email    openapi_types.Email `json:"email"`
+	Name     string              `json:"name"`
+	Password string              `json:"password"`
+	Role     PostUserRole        `json:"role"`
 }
+
+// PostUserRole defines model for PostUser.Role.
+type PostUserRole string
 
 // PutTaskStatus defines model for PutTaskStatus.
 type PutTaskStatus struct {
-	Status string `json:"status"`
+	Status PutTaskStatusStatus `json:"status"`
 }
+
+// PutTaskStatusStatus defines model for PutTaskStatus.Status.
+type PutTaskStatusStatus string
+
+// PutUserRole defines model for PutUserRole.
+type PutUserRole struct {
+	Role PutUserRoleRole `json:"role"`
+}
+
+// PutUserRoleRole defines model for PutUserRole.Role.
+type PutUserRoleRole string
 
 // Task defines model for Task.
 type Task struct {
@@ -50,6 +113,20 @@ type Task struct {
 	UpdatedAt  time.Time           `json:"updatedAt"`
 }
 
+// User defines model for User.
+type User struct {
+	Email *openapi_types.Email `json:"email,omitempty"`
+	Name  *string              `json:"name,omitempty"`
+	Role  *UserRole            `json:"role,omitempty"`
+	Uuid  *openapi_types.UUID  `json:"uuid,omitempty"`
+}
+
+// UserRole defines model for User.Role.
+type UserRole string
+
+// LoginJSONRequestBody defines body for Login for application/json ContentType.
+type LoginJSONRequestBody = LoginRequest
+
 // CreateTaskJSONRequestBody defines body for CreateTask for application/json ContentType.
 type CreateTaskJSONRequestBody = PostTask
 
@@ -61,3 +138,9 @@ type ChangeTaskStatusJSONRequestBody = PutTaskStatus
 
 // AddUserJSONRequestBody defines body for AddUser for application/json ContentType.
 type AddUserJSONRequestBody = PostUser
+
+// UpdateUserProfileJSONRequestBody defines body for UpdateUserProfile for application/json ContentType.
+type UpdateUserProfileJSONRequestBody = PatchUser
+
+// UpdateUserRoleJSONRequestBody defines body for UpdateUserRole for application/json ContentType.
+type UpdateUserRoleJSONRequestBody = PutUserRole

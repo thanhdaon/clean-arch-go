@@ -111,7 +111,7 @@ func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 
 func newExampleEmployer(t *testing.T) user.User {
 	t.Helper()
-	employer, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer)
+	employer, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Test Employer", "employer@example.com")
 	require.NoError(t, err)
 	return employer
 }

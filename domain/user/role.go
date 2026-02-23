@@ -3,7 +3,8 @@ package user
 import "errors"
 
 var (
-	RoleUnknow   = Role{}
+	RoleUnknown  = Role{}
+	RoleAdmin    = Role{"admin"}
 	RoleEmployer = Role{"employer"}
 	RoleEmployee = Role{"employee"}
 )
@@ -17,16 +18,18 @@ func (r Role) String() string {
 }
 
 func (r Role) IsZero() bool {
-	return r == RoleUnknow
+	return r == RoleUnknown
 }
 
 func UserRoleFromString(s string) (Role, error) {
 	switch s {
+	case RoleAdmin.slug:
+		return RoleAdmin, nil
 	case RoleEmployer.slug:
 		return RoleEmployer, nil
 	case RoleEmployee.slug:
 		return RoleEmployee, nil
 	default:
-		return RoleUnknow, errors.New("unknow role: " + s)
+		return RoleUnknown, errors.New("unknow role: " + s)
 	}
 }

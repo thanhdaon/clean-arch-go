@@ -11,3 +11,10 @@ type Task struct {
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
 }
+
+type UserDTO struct {
+	UUID  string `json:"uuid"`
+	Role  string `json:"role"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+}

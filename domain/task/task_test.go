@@ -11,7 +11,7 @@ import (
 func TestNewTask(t *testing.T) {
 	t.Parallel()
 
-	creator, err := user.NewUser("123", user.RoleEmployer)
+	creator, err := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	require.NoError(t, err)
 
 	tk, err := task.NewTask(creator, "task-uuid", "Initial Title")
@@ -26,7 +26,7 @@ func TestNewTask(t *testing.T) {
 func TestNewTask_InvalidRole(t *testing.T) {
 	t.Parallel()
 
-	creator, err := user.NewUser("123", user.RoleEmployee)
+	creator, err := user.NewUser("123", user.RoleEmployee, "Test User 1", "test1@example.com")
 	require.NoError(t, err)
 
 	tk, err := task.NewTask(creator, "task-uuid", "Initial Title")
@@ -38,7 +38,7 @@ func TestNewTask_InvalidRole(t *testing.T) {
 func TestUpdateTitle(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.UpdateTitle(creator, "Updated Title")
@@ -49,8 +49,8 @@ func TestUpdateTitle(t *testing.T) {
 func TestUpdateTitle_InvalidUser(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
-	otherUser, _ := user.NewUser("456", user.RoleEmployee)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	otherUser, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.UpdateTitle(otherUser, "Updated Title")
@@ -61,7 +61,7 @@ func TestUpdateTitle_InvalidUser(t *testing.T) {
 func TestChangeStatus(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.ChangeStatus(creator, task.StatusInProgress)
@@ -72,8 +72,8 @@ func TestChangeStatus(t *testing.T) {
 func TestChangeStatus_InvalidUser(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
-	otherUser, _ := user.NewUser("456", user.RoleEmployee)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	otherUser, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.ChangeStatus(otherUser, task.StatusInProgress)
@@ -84,8 +84,8 @@ func TestChangeStatus_InvalidUser(t *testing.T) {
 func TestAssignTo(t *testing.T) {
 	t.Parallel()
 
-	assigner, _ := user.NewUser("123", user.RoleEmployer)
-	assignee, _ := user.NewUser("456", user.RoleEmployer)
+	assigner, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	assignee, _ := user.NewUser("456", user.RoleEmployer, "Test User 2", "test2@example.com")
 	tk, _ := task.NewTask(assigner, "task-uuid", "Initial Title")
 
 	err := tk.AssignTo(assigner, assignee)
@@ -96,8 +96,8 @@ func TestAssignTo(t *testing.T) {
 func TestAssignTo_InvalidAssignee(t *testing.T) {
 	t.Parallel()
 
-	assigner, _ := user.NewUser("123", user.RoleEmployer)
-	assignee, _ := user.NewUser("456", user.RoleEmployee)
+	assigner, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	assignee, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
 	tk, _ := task.NewTask(assigner, "task-uuid", "Initial Title")
 
 	err := tk.AssignTo(assigner, assignee)
@@ -108,7 +108,7 @@ func TestAssignTo_InvalidAssignee(t *testing.T) {
 func TestChangeStatus_ValidTransitions(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.ChangeStatus(creator, task.StatusPending)
@@ -127,7 +127,7 @@ func TestChangeStatus_ValidTransitions(t *testing.T) {
 func TestChangeStatus_InvalidTransition(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.ChangeStatus(creator, task.StatusCompleted)
@@ -138,7 +138,7 @@ func TestChangeStatus_InvalidTransition(t *testing.T) {
 func TestReopen(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	tk.ChangeStatus(creator, task.StatusPending)
@@ -154,7 +154,7 @@ func TestReopen(t *testing.T) {
 func TestReopen_NotCompleted(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	err := tk.Reopen(creator)
@@ -165,8 +165,8 @@ func TestReopen_NotCompleted(t *testing.T) {
 func TestReopen_InvalidUser(t *testing.T) {
 	t.Parallel()
 
-	creator, _ := user.NewUser("123", user.RoleEmployer)
-	otherUser, _ := user.NewUser("456", user.RoleEmployee)
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	otherUser, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
 	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
 
 	tk.ChangeStatus(creator, task.StatusPending)

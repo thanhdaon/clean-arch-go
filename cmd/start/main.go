@@ -5,6 +5,7 @@ import (
 	"clean-arch-go/app"
 	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
+	"clean-arch-go/core/auth"
 	"clean-arch-go/core/logs"
 	"clean-arch-go/core/tracer"
 	"clean-arch-go/ports"
@@ -42,21 +43,28 @@ func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) 
 	taskRepository := adapters.NewMysqlTaskRepository(db)
 	userRepository := adapters.NewMysqlUserRepository(db)
 	videoService := adapters.NewVideoService(httpclient)
+	authService := auth.NewAuth("secret-key-for-development")
 
 	application := app.Application{
 		Commands: app.Commands{
-			AddUser:          command.NewAddUserHandler(id, userRepository, videoService, logger),
-			CreateTask:       command.NewCreateTaskHandler(id, taskRepository, logger),
-			ChangeTaskStatus: command.NewChangeTaskStatusHandler(taskRepository, logger),
-			AssignTask:       command.NewAssignTaskHandler(taskRepository, userRepository, logger),
-			UpdateTaskTitle:  command.NewUpdateTaskTitleHandler(taskRepository, logger),
-			UnassignTask:     command.NewUnassignTaskHandler(taskRepository, logger),
-			ReopenTask:       command.NewReopenTaskHandler(taskRepository, logger),
-			DeleteTask:       command.NewDeleteTaskHandler(taskRepository, logger),
-			ArchiveTask:      command.NewArchiveTaskHandler(taskRepository, logger),
+			AddUser:           command.NewAddUserHandler(id, userRepository, videoService, logger),
+			UpdateUserRole:    command.NewUpdateUserRoleHandler(userRepository, logger),
+			DeleteUser:        command.NewDeleteUserHandler(userRepository, logger),
+			UpdateUserProfile: command.NewUpdateUserProfileHandler(userRepository, logger),
+			CreateTask:        command.NewCreateTaskHandler(id, taskRepository, logger),
+			ChangeTaskStatus:  command.NewChangeTaskStatusHandler(taskRepository, logger),
+			AssignTask:        command.NewAssignTaskHandler(taskRepository, userRepository, logger),
+			UpdateTaskTitle:   command.NewUpdateTaskTitleHandler(taskRepository, logger),
+			UnassignTask:      command.NewUnassignTaskHandler(taskRepository, logger),
+			ReopenTask:        command.NewReopenTaskHandler(taskRepository, logger),
+			DeleteTask:        command.NewDeleteTaskHandler(taskRepository, logger),
+			ArchiveTask:       command.NewArchiveTaskHandler(taskRepository, logger),
 		},
 		Queries: app.Queries{
 			Tasks: query.NewTaskHandler(taskRepository, logger),
+			User:  query.NewUserHandler(userRepository, logger),
+			Users: query.NewUsersHandler(userRepository, logger),
+			Login: query.NewLoginHandler(userRepository, authService, logger),
 		},
 	}
 

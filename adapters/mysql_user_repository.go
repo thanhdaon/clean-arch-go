@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"clean-arch-go/app/command"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/user"
@@ -13,8 +14,12 @@ import (
 )
 
 type MysqlUser struct {
-	ID   string `db:"id"`
-	Role string `db:"role"`
+	ID           string         `db:"id"`
+	Role         string         `db:"role"`
+	Name         sql.NullString `db:"name"`
+	Email        sql.NullString `db:"email"`
+	PasswordHash sql.NullString `db:"password_hash"`
+	DeletedAt    sql.NullTime   `db:"deleted_at"`
 }
 
 type MysqlUserRepository struct {
@@ -29,15 +34,18 @@ func (r MysqlUserRepository) Add(ctx context.Context, u user.User) error {
 	op := errors.Op("MysqlUserRepository.Add")
 
 	added := MysqlUser{
-		ID:   u.UUID(),
-		Role: u.Role().String(),
+		ID:           u.UUID(),
+		Role:         u.Role().String(),
+		Name:         sql.NullString{String: u.Name(), Valid: u.Name() != ""},
+		Email:        sql.NullString{String: u.Email(), Valid: u.Email() != ""},
+		PasswordHash: sql.NullString{String: u.PasswordHash(), Valid: u.PasswordHash() != ""},
 	}
 
 	query := `
 		INSERT INTO users
-			(id, role) 
-		VALUES 
-			(:id, :role)
+			(id, role, name, email, password_hash)
+		VALUES
+			(:id, :role, :name, :email, :password_hash)
 	`
 
 	if _, err := r.db.NamedExecContext(ctx, query, added); err != nil {
@@ -47,7 +55,7 @@ func (r MysqlUserRepository) Add(ctx context.Context, u user.User) error {
 	return nil
 }
 
-func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, updateFn func(context.Context, user.User) (user.User, error)) error {
+func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, updateFn command.UserUpdater) error {
 	op := errors.Op("MysqlUserRepository.UpdateByID")
 
 	tx, err := r.db.Beginx()
@@ -74,14 +82,20 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 	}
 
 	updated := MysqlUser{
-		ID:   updatedUser.UUID(),
-		Role: updatedUser.Role().String(),
+		ID:           updatedUser.UUID(),
+		Role:         updatedUser.Role().String(),
+		Name:         sql.NullString{String: updatedUser.Name(), Valid: updatedUser.Name() != ""},
+		Email:        sql.NullString{String: updatedUser.Email(), Valid: updatedUser.Email() != ""},
+		PasswordHash: sql.NullString{String: updatedUser.PasswordHash(), Valid: updatedUser.PasswordHash() != ""},
 	}
 
 	query := `
-		UPDATE users 
-		SET 
-			role = :role
+		UPDATE users
+		SET
+			role = :role,
+			name = :name,
+			email = :email,
+			password_hash = :password_hash
 		WHERE id = :id;
 	`
 	result, err := r.db.NamedExecContext(ctx, query, updated)
@@ -105,7 +119,7 @@ func (r MysqlUserRepository) FindById(ctx context.Context, uuid string) (user.Us
 	op := errors.Op("MysqlUserRepository.FindById")
 
 	data := MysqlUser{}
-	query := "SELECT * FROM `users` WHERE `id` = ?"
+	query := "SELECT * FROM `users` WHERE `id` = ? AND `deleted_at` IS NULL"
 
 	if err := r.db.GetContext(ctx, &data, query, uuid); err != nil {
 		if err == sql.ErrNoRows {
@@ -115,12 +129,91 @@ func (r MysqlUserRepository) FindById(ctx context.Context, uuid string) (user.Us
 		return nil, errors.E(op, err)
 	}
 
-	domainUser, err := user.From(data.ID, data.Role)
+	name := data.Name.String
+	email := data.Email.String
+	passwordHash := data.PasswordHash.String
+
+	domainUser, err := user.From(data.ID, data.Role, name, email, passwordHash)
 	if err != nil {
 		return nil, errors.E(op, err)
 	}
 
 	return domainUser, nil
+}
+
+func (r MysqlUserRepository) FindByEmail(ctx context.Context, email string) (user.User, error) {
+	op := errors.Op("MysqlUserRepository.FindByEmail")
+
+	data := MysqlUser{}
+	query := "SELECT * FROM `users` WHERE `email` = ? AND `deleted_at` IS NULL"
+
+	if err := r.db.GetContext(ctx, &data, query, email); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, errors.E(op, errkind.NotExist, err)
+		}
+
+		return nil, errors.E(op, err)
+	}
+
+	name := data.Name.String
+	emailStr := data.Email.String
+	passwordHash := data.PasswordHash.String
+
+	domainUser, err := user.From(data.ID, data.Role, name, emailStr, passwordHash)
+	if err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return domainUser, nil
+}
+
+func (r MysqlUserRepository) FindAll(ctx context.Context) ([]user.User, error) {
+	op := errors.Op("MysqlUserRepository.FindAll")
+
+	var data []MysqlUser
+	query := "SELECT * FROM `users` WHERE `deleted_at` IS NULL"
+
+	if err := r.db.SelectContext(ctx, &data, query); err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	domainUsers := make([]user.User, len(data))
+	for i, u := range data {
+		name := u.Name.String
+		emailStr := u.Email.String
+		passwordHash := u.PasswordHash.String
+
+		domainUser, err := user.From(u.ID, u.Role, name, emailStr, passwordHash)
+		if err != nil {
+			return nil, errors.E(op, err)
+		}
+
+		domainUsers[i] = domainUser
+	}
+
+	return domainUsers, nil
+}
+
+func (r MysqlUserRepository) DeleteByID(ctx context.Context, uuid string) error {
+	op := errors.Op("MysqlUserRepository.DeleteByID")
+
+	query := "UPDATE `users` SET `deleted_at` = NOW() WHERE `id` = ?"
+
+	result, err := r.db.ExecContext(ctx, query, uuid)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	if rowsAffected == 0 {
+		return errors.E(op, errkind.NotExist, fmt.Errorf("user with id %s not found", uuid))
+	}
+
+	return nil
 }
 
 func (r MysqlUserRepository) RemoveAll(ctx context.Context) error {

@@ -62,7 +62,7 @@ func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, ta
 
 	err = h.app.Commands.ChangeTaskStatus.Handle(r.Context(), command.ChangeTaskStatus{
 		TaskId:  taskId,
-		Status:  body.Status,
+		Status:  string(body.Status),
 		Changer: changer,
 	})
 
@@ -84,7 +84,10 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err := h.app.Commands.AddUser.Handle(r.Context(), command.AddUser{
-		Role: body.Role,
+		Role:     string(body.Role),
+		Name:     body.Name,
+		Email:    string(body.Email),
+		Password: body.Password,
 	})
 
 	if err != nil {
@@ -93,6 +96,146 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	op := errors.Op("http.ListUsers")
+	ctx := r.Context()
+
+	users, err := h.app.Queries.Users.Handle(ctx, query.UsersQuery{})
+	if err != nil {
+		internalError(ctx, errors.E(op, err), w, r)
+		return
+	}
+
+	render.Respond(w, r, map[string]any{
+		"status":   http.StatusOK,
+		"users":    users,
+		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
+	})
+}
+
+func (h HttpHandler) GetUser(w http.ResponseWriter, r *http.Request, userId string) {
+	op := errors.Op("http.GetUser")
+	ctx := r.Context()
+
+	user, err := h.app.Queries.User.Handle(ctx, query.UserQuery{
+		UserUUID: userId,
+	})
+
+	if err != nil {
+		internalError(ctx, errors.E(op, err), w, r)
+		return
+	}
+
+	render.Respond(w, r, map[string]any{
+		"status":   http.StatusOK,
+		"user":     user,
+		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
+	})
+}
+
+func (h HttpHandler) DeleteUser(w http.ResponseWriter, r *http.Request, userId string) {
+	op := errors.Op("http.DeleteUser")
+
+	err := h.app.Commands.DeleteUser.Handle(r.Context(), command.DeleteUser{
+		UserUUID: userId,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) UpdateUserProfile(w http.ResponseWriter, r *http.Request, userId string) {
+	op := errors.Op("http.UpdateUserProfile")
+
+	body := PatchUser{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	name := ""
+	email := ""
+	if body.Name != nil {
+		name = *body.Name
+	}
+	if body.Email != nil {
+		email = string(*body.Email)
+	}
+
+	err := h.app.Commands.UpdateUserProfile.Handle(r.Context(), command.UpdateUserProfile{
+		UserUUID: userId,
+		Name:     name,
+		Email:    email,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request, userId string) {
+	op := errors.Op("http.UpdateUserRole")
+
+	currentUser, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PutUserRole{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	err = h.app.Commands.UpdateUserRole.Handle(r.Context(), command.UpdateUserRole{
+		CurrentUserUUID: currentUser.UUID(),
+		TargetUserUUID:  userId,
+		NewRole:         string(body.Role),
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) Login(w http.ResponseWriter, r *http.Request) {
+	op := errors.Op("http.Login")
+
+	body := LoginRequest{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	result, err := h.app.Queries.Login.Handle(r.Context(), query.Login{
+		Email:    string(body.Email),
+		Password: body.Password,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	render.Respond(w, r, map[string]any{
+		"status":   http.StatusOK,
+		"token":    result.Token,
+		"user":     result.User,
+		"trace_id": trace.SpanContextFromContext(r.Context()).TraceID(),
+	})
 }
 
 func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {

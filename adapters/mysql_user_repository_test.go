@@ -74,14 +74,14 @@ func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {
 
 func newEmployeeUser(t *testing.T) user.User {
 	t.Helper()
-	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployee)
+	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployee, "Employee Name", "employee@example.com")
 	require.NoError(t, err)
 	return created
 }
 
 func newEmployerUser(t *testing.T) user.User {
 	t.Helper()
-	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer)
+	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Employer Name", "employer@example.com")
 	require.NoError(t, err)
 	return created
 }

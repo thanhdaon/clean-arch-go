@@ -12,9 +12,10 @@ func TestUserRole_String(t *testing.T) {
 		role     user.Role
 		expected string
 	}{
+		{user.RoleAdmin, "admin"},
 		{user.RoleEmployer, "employer"},
 		{user.RoleEmployee, "employee"},
-		{user.RoleUnknow, ""},
+		{user.RoleUnknown, ""},
 	}
 
 	for _, tt := range tests {
@@ -29,9 +30,10 @@ func TestUserRole_IsZero(t *testing.T) {
 		role     user.Role
 		expected bool
 	}{
+		{user.RoleAdmin, false},
 		{user.RoleEmployer, false},
 		{user.RoleEmployee, false},
-		{user.RoleUnknow, true},
+		{user.RoleUnknown, true},
 	}
 
 	for _, tt := range tests {
@@ -47,10 +49,11 @@ func TestUserRole_FromString(t *testing.T) {
 		expected user.Role
 		wantErr  bool
 	}{
+		{"admin", user.RoleAdmin, false},
 		{"employer", user.RoleEmployer, false},
 		{"employee", user.RoleEmployee, false},
-		{"manager", user.RoleUnknow, true},
-		{"", user.RoleUnknow, true},
+		{"manager", user.RoleUnknown, true},
+		{"", user.RoleUnknown, true},
 	}
 
 	for _, tt := range tests {

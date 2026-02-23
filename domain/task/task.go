@@ -2,6 +2,7 @@ package task
 
 import (
 	"clean-arch-go/domain/user"
+	"database/sql"
 	"errors"
 	"fmt"
 	"time"
@@ -20,6 +21,9 @@ type Task interface {
 	AssignTo(assigner user.User, assignee user.User) error
 	Unassign(remover user.User) error
 	Reopen(opener user.User) error
+	IsDeleted() bool
+	DeletedAt() time.Time
+	Delete(deleter user.User) error
 }
 
 type task struct {
@@ -34,6 +38,7 @@ type task struct {
 
 	createdAt time.Time
 	updatedAt time.Time
+	deletedAt sql.NullTime
 }
 
 func (t *task) UUID() string {
@@ -155,6 +160,29 @@ func (t *task) Reopen(opener user.User) error {
 	return nil
 }
 
+func (t *task) IsDeleted() bool {
+	return t.deletedAt.Valid
+}
+
+func (t *task) DeletedAt() time.Time {
+	if t.deletedAt.Valid {
+		return t.deletedAt.Time
+	}
+	return time.Time{}
+}
+
+func (t *task) Delete(deleter user.User) error {
+	if deleter.Role() != user.RoleEmployer {
+		return errors.New("only employer can delete task")
+	}
+	if deleter.UUID() != t.createdBy {
+		return errors.New("only task creator can delete task")
+	}
+	t.deletedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	t.updatedAt = time.Now()
+	return nil
+}
+
 func NewTask(creator user.User, uuid, title string) (Task, error) {
 	if role := creator.Role(); role != user.RoleEmployer {
 		return nil, errors.New("only employ can create task")
@@ -177,7 +205,7 @@ func NewTask(creator user.User, uuid, title string) (Task, error) {
 	}, nil
 }
 
-func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time) (Task, error) {
+func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time, deletedAt sql.NullTime) (Task, error) {
 	status, err := StatusFromString(statusString)
 	if err != nil {
 		return nil, err
@@ -191,5 +219,6 @@ func From(id, title, statusString, createdBy, assignedTo string, createdAt, upda
 		assignedTo: assignedTo,
 		createdAt:  createdAt,
 		updatedAt:  updatedAt,
+		deletedAt:  deletedAt,
 	}, nil
 }

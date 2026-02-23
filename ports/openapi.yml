@@ -103,11 +103,29 @@ paths:
         required: true
         content:
           application/json:
-            schema:
-              $ref: "#/components/schemas/PatchTaskTitle"
+             schema:
+               $ref: "#/components/schemas/PatchTaskTitle"
       responses:
         "200":
           description: Task title successfully updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      operationId: deleteTask
+      summary: Delete a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Task successfully deleted
         default:
           description: unexpected error
           content:

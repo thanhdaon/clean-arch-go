@@ -22,6 +22,7 @@ type MysqlTask struct {
 	AssignedTo string       `db:"assigned_to"`
 	CreatedAt  time.Time    `db:"created_at"`
 	UpdatedAt  sql.NullTime `db:"updated_at"`
+	DeletedAt  sql.NullTime `db:"deleted_at"`
 }
 
 type MysqlTaskRepository struct {
@@ -127,7 +128,7 @@ func (r MysqlTaskRepository) AllTasks(ctx context.Context) ([]query.Task, error)
 	op := errors.Op("MysqlTaskRepository.AllTasks")
 
 	data := []MysqlTask{}
-	query := "SELECT * FROM `tasks`"
+	query := "SELECT * FROM `tasks` WHERE `deleted_at` IS NULL"
 
 	if err := r.db.SelectContext(ctx, &data, query); err != nil {
 		return nil, errors.E(op, err)
@@ -140,7 +141,7 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 	op := errors.Op("MysqlTaskRepository.FindById")
 
 	data := MysqlTask{}
-	query := "SELECT * FROM `tasks` WHERE `id` = ?"
+	query := "SELECT * FROM `tasks` WHERE `id` = ? AND `deleted_at` IS NULL"
 
 	if err := r.db.GetContext(ctx, &data, query, uuid); err != nil {
 		if err == sql.ErrNoRows {
@@ -152,7 +153,7 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 
 	domainTask, err := task.From(
 		data.ID, data.Title, data.Status, data.CreatedBy, data.AssignedTo,
-		data.CreatedAt, nullTimeToTime(data.UpdatedAt),
+		data.CreatedAt, nullTimeToTime(data.UpdatedAt), data.DeletedAt,
 	)
 	if err != nil {
 		return nil, errors.E(op, err)

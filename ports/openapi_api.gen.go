@@ -37,12 +37,27 @@ type ServerInterface interface {
 	// Assign task to a user
 	// (PUT /tasks/{taskId}/assign/{assigneeId})
 	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
+	// Update task description
+	// (PATCH /tasks/{taskId}/description)
+	SetTaskDescription(w http.ResponseWriter, r *http.Request, taskId string)
+	// Update task due date
+	// (PUT /tasks/{taskId}/due-date)
+	SetTaskDueDate(w http.ResponseWriter, r *http.Request, taskId string)
+	// Update task priority
+	// (PUT /tasks/{taskId}/priority)
+	SetTaskPriority(w http.ResponseWriter, r *http.Request, taskId string)
 	// Reopen a completed task
 	// (PUT /tasks/{taskId}/reopen)
 	ReopenTask(w http.ResponseWriter, r *http.Request, taskId string)
 	// Update task status
 	// (PUT /tasks/{taskId}/status)
 	ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string)
+	// Add a tag to a task
+	// (POST /tasks/{taskId}/tags)
+	AddTaskTag(w http.ResponseWriter, r *http.Request, taskId string)
+	// Remove a tag from a task
+	// (DELETE /tasks/{taskId}/tags/{tagId})
+	RemoveTaskTag(w http.ResponseWriter, r *http.Request, taskId string, tagId string)
 	// Get all users
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request)
@@ -115,6 +130,24 @@ func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Update task description
+// (PATCH /tasks/{taskId}/description)
+func (_ Unimplemented) SetTaskDescription(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update task due date
+// (PUT /tasks/{taskId}/due-date)
+func (_ Unimplemented) SetTaskDueDate(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update task priority
+// (PUT /tasks/{taskId}/priority)
+func (_ Unimplemented) SetTaskPriority(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Reopen a completed task
 // (PUT /tasks/{taskId}/reopen)
 func (_ Unimplemented) ReopenTask(w http.ResponseWriter, r *http.Request, taskId string) {
@@ -124,6 +157,18 @@ func (_ Unimplemented) ReopenTask(w http.ResponseWriter, r *http.Request, taskId
 // Update task status
 // (PUT /tasks/{taskId}/status)
 func (_ Unimplemented) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a tag to a task
+// (POST /tasks/{taskId}/tags)
+func (_ Unimplemented) AddTaskTag(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Remove a tag from a task
+// (DELETE /tasks/{taskId}/tags/{tagId})
+func (_ Unimplemented) RemoveTaskTag(w http.ResponseWriter, r *http.Request, taskId string, tagId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -348,6 +393,81 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// SetTaskDescription operation middleware
+func (siw *ServerInterfaceWrapper) SetTaskDescription(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTaskDescription(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetTaskDueDate operation middleware
+func (siw *ServerInterfaceWrapper) SetTaskDueDate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTaskDueDate(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetTaskPriority operation middleware
+func (siw *ServerInterfaceWrapper) SetTaskPriority(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetTaskPriority(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ReopenTask operation middleware
 func (siw *ServerInterfaceWrapper) ReopenTask(w http.ResponseWriter, r *http.Request) {
 
@@ -389,6 +509,65 @@ func (siw *ServerInterfaceWrapper) ChangeTaskStatus(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ChangeTaskStatus(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddTaskTag operation middleware
+func (siw *ServerInterfaceWrapper) AddTaskTag(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddTaskTag(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveTaskTag operation middleware
+func (siw *ServerInterfaceWrapper) RemoveTaskTag(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "tagId" -------------
+	var tagId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tagId", chi.URLParam(r, "tagId"), &tagId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tagId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveTaskTag(w, r, taskId, tagId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -664,10 +843,25 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Put(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)
 	})
 	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/tasks/{taskId}/description", wrapper.SetTaskDescription)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/tasks/{taskId}/due-date", wrapper.SetTaskDueDate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/tasks/{taskId}/priority", wrapper.SetTaskPriority)
+	})
+	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/tasks/{taskId}/reopen", wrapper.ReopenTask)
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/tasks/{taskId}/status", wrapper.ChangeTaskStatus)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/tasks/{taskId}/tags", wrapper.AddTaskTag)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/tasks/{taskId}/tags/{tagId}", wrapper.RemoveTaskTag)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/users", wrapper.ListUsers)

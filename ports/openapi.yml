@@ -379,6 +379,144 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/priority:
+    put:
+      tags:
+        - Tasks
+      operationId: setTaskPriority
+      summary: Update task priority
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Task priority update payload
+        required: true
+        content:
+          application/json:
+             schema:
+               $ref: "#/components/schemas/PutTaskPriority"
+      responses:
+        "200":
+          description: Task priority successfully updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/due-date:
+    put:
+      tags:
+        - Tasks
+      operationId: setTaskDueDate
+      summary: Update task due date
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Task due date update payload
+        required: true
+        content:
+          application/json:
+             schema:
+               $ref: "#/components/schemas/PutTaskDueDate"
+      responses:
+        "200":
+          description: Task due date successfully updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/description:
+    patch:
+      tags:
+        - Tasks
+      operationId: setTaskDescription
+      summary: Update task description
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Task description update payload
+        required: true
+        content:
+          application/json:
+             schema:
+               $ref: "#/components/schemas/PatchTaskDescription"
+      responses:
+        "200":
+          description: Task description successfully updated
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/tags:
+    post:
+      tags:
+        - Tasks
+      operationId: addTaskTag
+      summary: Add a tag to a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Tag creation payload
+        required: true
+        content:
+          application/json:
+             schema:
+               $ref: "#/components/schemas/PostTaskTag"
+      responses:
+        "200":
+          description: Tag successfully added to task
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /tasks/{taskId}/tags/{tagId}:
+    delete:
+      tags:
+        - Tasks
+      operationId: removeTaskTag
+      summary: Remove a tag from a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tagId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Tag successfully removed from task
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 components:
   schemas:
@@ -428,6 +566,17 @@ components:
           type: string
           format: date-time
           example: "2024-01-15T14:45:00Z"
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: "high"
+        dueDate:
+          type: string
+          format: date-time
+          example: "2024-03-01T10:00:00Z"
+        description:
+          type: string
+          example: "Review the API documentation and ensure all endpoints are properly documented"
     PostUser:
       type: object
       required: [role, name, email, password]
@@ -518,6 +667,35 @@ components:
         title:
           type: string
           example: "Fix authentication bug in login flow"
+    PatchTaskDescription:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "This task involves fixing the authentication bug in the login flow"
+    PostTaskTag:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: "bug"
+    PutTaskPriority:
+      type: object
+      required: [priority]
+      properties:
+        priority:
+          type: string
+          enum: [low, medium, high, urgent]
+          example: "high"
+    PutTaskDueDate:
+      type: object
+      required: [due_date]
+      properties:
+        due_date:
+          type: string
+          format: date-time
+          example: "2024-03-01T10:00:00Z"
     PostTask:
       type: object
       required: [title, creator]

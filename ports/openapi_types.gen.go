@@ -16,12 +16,12 @@ const (
 	PostUserRoleEmployer PostUserRole = "employer"
 )
 
-// Defines values for PriorityEnum.
+// Defines values for PutTaskPriorityPriority.
 const (
-	PriorityEnumLow    PriorityEnum = "low"
-	PriorityEnumMedium PriorityEnum = "medium"
-	PriorityEnumHigh   PriorityEnum = "high"
-	PriorityEnumUrgent PriorityEnum = "urgent"
+	PutTaskPriorityPriorityHigh   PutTaskPriorityPriority = "high"
+	PutTaskPriorityPriorityLow    PutTaskPriorityPriority = "low"
+	PutTaskPriorityPriorityMedium PutTaskPriorityPriority = "medium"
+	PutTaskPriorityPriorityUrgent PutTaskPriorityPriority = "urgent"
 )
 
 // Defines values for PutTaskStatusStatus.
@@ -36,6 +36,14 @@ const (
 	PutUserRoleRoleAdmin    PutUserRoleRole = "admin"
 	PutUserRoleRoleEmployee PutUserRoleRole = "employee"
 	PutUserRoleRoleEmployer PutUserRoleRole = "employer"
+)
+
+// Defines values for TaskPriority.
+const (
+	TaskPriorityHigh   TaskPriority = "high"
+	TaskPriorityLow    TaskPriority = "low"
+	TaskPriorityMedium TaskPriority = "medium"
+	TaskPriorityUrgent TaskPriority = "urgent"
 )
 
 // Defines values for UserRole.
@@ -66,32 +74,14 @@ type LoginResponse struct {
 	User  *User   `json:"user,omitempty"`
 }
 
+// PatchTaskDescription defines model for PatchTaskDescription.
+type PatchTaskDescription struct {
+	Description *string `json:"description,omitempty"`
+}
+
 // PatchTaskTitle defines model for PatchTaskTitle.
 type PatchTaskTitle struct {
 	Title string `json:"title"`
-}
-
-// PatchTaskDescription defines model for PatchTaskDescription.
-type PatchTaskDescription struct {
-	Description *string `json:"description"`
-}
-
-// PostTaskTag defines model for PostTaskTag.
-type PostTaskTag struct {
-	Name string `json:"name"`
-}
-
-// PriorityEnum defines model for PriorityEnum.
-type PriorityEnum string
-
-// PutTaskDueDate defines model for PutTaskDueDate.
-type PutTaskDueDate struct {
-	DueDate time.Time `json:"due_date"`
-}
-
-// PutTaskPriority defines model for PutTaskPriority.
-type PutTaskPriority struct {
-	Priority PriorityEnum `json:"priority"`
 }
 
 // PatchUser defines model for PatchUser.
@@ -106,6 +96,11 @@ type PostTask struct {
 	Title   string             `json:"title"`
 }
 
+// PostTaskTag defines model for PostTaskTag.
+type PostTaskTag struct {
+	Name string `json:"name"`
+}
+
 // PostUser defines model for PostUser.
 type PostUser struct {
 	Email    openapi_types.Email `json:"email"`
@@ -116,6 +111,19 @@ type PostUser struct {
 
 // PostUserRole defines model for PostUser.Role.
 type PostUserRole string
+
+// PutTaskDueDate defines model for PutTaskDueDate.
+type PutTaskDueDate struct {
+	DueDate time.Time `json:"due_date"`
+}
+
+// PutTaskPriority defines model for PutTaskPriority.
+type PutTaskPriority struct {
+	Priority PutTaskPriorityPriority `json:"priority"`
+}
+
+// PutTaskPriorityPriority defines model for PutTaskPriority.Priority.
+type PutTaskPriorityPriority string
 
 // PutTaskStatus defines model for PutTaskStatus.
 type PutTaskStatus struct {
@@ -135,14 +143,20 @@ type PutUserRoleRole string
 
 // Task defines model for Task.
 type Task struct {
-	AssignedTo openapi_types.UUID  `json:"assignedTo"`
-	CreatedAt  time.Time           `json:"createdAt"`
-	CreatedBy  openapi_types.UUID  `json:"createdBy"`
-	Id         *openapi_types.UUID `json:"id,omitempty"`
-	Status     string              `json:"status"`
-	Title      string              `json:"title"`
-	UpdatedAt  time.Time           `json:"updatedAt"`
+	AssignedTo  openapi_types.UUID  `json:"assignedTo"`
+	CreatedAt   time.Time           `json:"createdAt"`
+	CreatedBy   openapi_types.UUID  `json:"createdBy"`
+	Description *string             `json:"description,omitempty"`
+	DueDate     *time.Time          `json:"dueDate,omitempty"`
+	Id          *openapi_types.UUID `json:"id,omitempty"`
+	Priority    *TaskPriority       `json:"priority,omitempty"`
+	Status      string              `json:"status"`
+	Title       string              `json:"title"`
+	UpdatedAt   time.Time           `json:"updatedAt"`
 }
+
+// TaskPriority defines model for Task.Priority.
+type TaskPriority string
 
 // User defines model for User.
 type User struct {
@@ -164,8 +178,20 @@ type CreateTaskJSONRequestBody = PostTask
 // UpdateTaskTitleJSONRequestBody defines body for UpdateTaskTitle for application/json ContentType.
 type UpdateTaskTitleJSONRequestBody = PatchTaskTitle
 
+// SetTaskDescriptionJSONRequestBody defines body for SetTaskDescription for application/json ContentType.
+type SetTaskDescriptionJSONRequestBody = PatchTaskDescription
+
+// SetTaskDueDateJSONRequestBody defines body for SetTaskDueDate for application/json ContentType.
+type SetTaskDueDateJSONRequestBody = PutTaskDueDate
+
+// SetTaskPriorityJSONRequestBody defines body for SetTaskPriority for application/json ContentType.
+type SetTaskPriorityJSONRequestBody = PutTaskPriority
+
 // ChangeTaskStatusJSONRequestBody defines body for ChangeTaskStatus for application/json ContentType.
 type ChangeTaskStatusJSONRequestBody = PutTaskStatus
+
+// AddTaskTagJSONRequestBody defines body for AddTaskTag for application/json ContentType.
+type AddTaskTagJSONRequestBody = PostTaskTag
 
 // AddUserJSONRequestBody defines body for AddUser for application/json ContentType.
 type AddUserJSONRequestBody = PostUser
@@ -175,15 +201,3 @@ type UpdateUserProfileJSONRequestBody = PatchUser
 
 // UpdateUserRoleJSONRequestBody defines body for UpdateUserRole for application/json ContentType.
 type UpdateUserRoleJSONRequestBody = PutUserRole
-
-// SetTaskPriorityJSONRequestBody defines body for SetTaskPriority for application/json ContentType.
-type SetTaskPriorityJSONRequestBody = PutTaskPriority
-
-// SetTaskDueDateJSONRequestBody defines body for SetTaskDueDate for application/json ContentType.
-type SetTaskDueDateJSONRequestBody = PutTaskDueDate
-
-// SetTaskDescriptionJSONRequestBody defines body for SetTaskDescription for application/json ContentType.
-type SetTaskDescriptionJSONRequestBody = PatchTaskDescription
-
-// AddTaskTagJSONRequestBody defines body for AddTaskTag for application/json ContentType.
-type AddTaskTagJSONRequestBody = PostTaskTag

@@ -5,6 +5,7 @@ import (
 	"clean-arch-go/app/query"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
+	"clean-arch-go/domain/tag"
 	"clean-arch-go/domain/task"
 	"context"
 	"database/sql"
@@ -212,6 +213,50 @@ func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {
 
 	if err := tx.Commit(); err != nil {
 		return errors.E(op, err)
+	}
+
+	return nil
+}
+
+func (r MysqlTaskRepository) AddTag(ctx context.Context, t tag.Tag) error {
+	op := errors.Op("MysqlTaskRepository.AddTag")
+
+	row := MysqlTag{
+		ID:        t.UUID(),
+		TaskID:    t.TaskID(),
+		Name:      t.Name(),
+		CreatedAt: time.Now(),
+	}
+
+	query := `
+		INSERT INTO task_tags (id, task_id, name, created_at)
+		VALUES (:id, :task_id, :name, :created_at)
+	`
+
+	if _, err := r.db.NamedExecContext(ctx, query, row); err != nil {
+		return errors.E(op, err)
+	}
+
+	return nil
+}
+
+func (r MysqlTaskRepository) RemoveTag(ctx context.Context, tagID string) error {
+	op := errors.Op("MysqlTaskRepository.RemoveTag")
+
+	query := `DELETE FROM task_tags WHERE id = ?`
+
+	result, err := r.db.ExecContext(ctx, query, tagID)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	if rowsAffected == 0 {
+		return errors.E(op, errkind.NotExist, fmt.Errorf("tag with id %s not found", tagID))
 	}
 
 	return nil

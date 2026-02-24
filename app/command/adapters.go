@@ -1,6 +1,7 @@
 package command
 
 import (
+	"clean-arch-go/domain/tag"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -16,6 +17,12 @@ type TaskUpdater func(context.Context, task.Task) (task.Task, error)
 type TaskRepository interface {
 	Add(context.Context, task.Task) error
 	UpdateByID(ctx context.Context, uuid string, updateFn TaskUpdater) error
+	AddTag(ctx context.Context, t tag.Tag) error
+	RemoveTag(ctx context.Context, tagID string) error
+}
+
+type TagRepository interface {
+	FindById(ctx context.Context, uuid string) (tag.Tag, error)
 }
 
 type UserRepository interface {

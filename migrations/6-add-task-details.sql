@@ -1,0 +1,18 @@
+-- +migrate Up
+ALTER TABLE tasks ADD COLUMN priority INT DEFAULT 2;
+ALTER TABLE tasks ADD COLUMN due_date DATETIME NULL;
+ALTER TABLE tasks ADD COLUMN description TEXT NULL;
+
+CREATE TABLE task_tags (
+    id VARCHAR(255) NOT NULL PRIMARY KEY,
+    task_id VARCHAR(255) NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+);
+
+-- +migrate Down
+DROP TABLE task_tags;
+ALTER TABLE tasks DROP COLUMN priority;
+ALTER TABLE tasks DROP COLUMN due_date;
+ALTER TABLE tasks DROP COLUMN description;

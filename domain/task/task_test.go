@@ -4,6 +4,7 @@ import (
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -176,4 +177,96 @@ func TestReopen_InvalidUser(t *testing.T) {
 	err := tk.Reopen(otherUser)
 	require.Error(t, err)
 	require.EqualError(t, err, "user is not allowed to reopen this task")
+}
+
+func TestSetPriority(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.SetPriority(creator, task.PriorityHigh)
+	require.NoError(t, err)
+	require.Equal(t, task.PriorityHigh, tk.Priority())
+}
+
+func TestSetPriority_InvalidUser(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	employee, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.SetPriority(employee, task.PriorityHigh)
+	require.Error(t, err)
+	require.EqualError(t, err, "user is not allowed to update this task")
+}
+
+func TestSetDueDate(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+	due := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
+
+	err := tk.SetDueDate(creator, due)
+	require.NoError(t, err)
+	require.Equal(t, due, tk.DueDate())
+}
+
+func TestSetDueDate_InvalidUser(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	employee, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+	due := time.Date(2026, 3, 1, 10, 0, 0, 0, time.UTC)
+
+	err := tk.SetDueDate(employee, due)
+	require.Error(t, err)
+	require.EqualError(t, err, "user is not allowed to update this task")
+}
+
+func TestSetDescription(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.SetDescription(creator, "This is a description")
+	require.NoError(t, err)
+	require.Equal(t, "This is a description", tk.Description())
+}
+
+func TestSetDescription_InvalidUser(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	employee, _ := user.NewUser("456", user.RoleEmployee, "Test User 2", "test2@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	err := tk.SetDescription(employee, "desc")
+	require.Error(t, err)
+	require.EqualError(t, err, "user is not allowed to update this task")
+}
+
+func TestSetDescription_AssignedEmployeeAllowed(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	assignee, _ := user.NewUser("456", user.RoleEmployer, "Test User 2", "test2@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+	tk.AssignTo(creator, assignee)
+
+	err := tk.SetDescription(assignee, "desc")
+	require.NoError(t, err)
+}
+
+func TestNewTask_DefaultPriority(t *testing.T) {
+	t.Parallel()
+
+	creator, _ := user.NewUser("123", user.RoleEmployer, "Test User 1", "test1@example.com")
+	tk, _ := task.NewTask(creator, "task-uuid", "Initial Title")
+
+	require.Equal(t, task.PriorityMedium, tk.Priority())
 }

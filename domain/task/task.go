@@ -27,6 +27,12 @@ type Task interface {
 	IsArchived() bool
 	ArchivedAt() time.Time
 	Archive(archiver user.User) error
+	Priority() Priority
+	DueDate() time.Time
+	Description() string
+	SetPriority(updater user.User, p Priority) error
+	SetDueDate(updater user.User, d time.Time) error
+	SetDescription(updater user.User, desc string) error
 }
 
 type task struct {
@@ -43,6 +49,10 @@ type task struct {
 	updatedAt  time.Time
 	deletedAt  sql.NullTime
 	archivedAt sql.NullTime
+
+	priority    Priority
+	dueDate     sql.NullTime
+	description sql.NullString
 }
 
 func (t *task) UUID() string {
@@ -198,6 +208,24 @@ func (t *task) ArchivedAt() time.Time {
 	return time.Time{}
 }
 
+func (t *task) Priority() Priority {
+	return t.priority
+}
+
+func (t *task) DueDate() time.Time {
+	if t.dueDate.Valid {
+		return t.dueDate.Time
+	}
+	return time.Time{}
+}
+
+func (t *task) Description() string {
+	if t.description.Valid {
+		return t.description.String
+	}
+	return ""
+}
+
 func (t *task) Archive(archiver user.User) error {
 	if archiver.Role() != user.RoleEmployer {
 		return errors.New("only employer can archive task")
@@ -206,6 +234,43 @@ func (t *task) Archive(archiver user.User) error {
 		return errors.New("only completed tasks can be archived")
 	}
 	t.archivedAt = sql.NullTime{Time: time.Now(), Valid: true}
+	t.updatedAt = time.Now()
+	return nil
+}
+
+func (t *task) allowToUpdate(updater user.User) bool {
+	if updater.Role() == user.RoleEmployer {
+		return true
+	}
+	if updater.UUID() == t.assignedTo {
+		return true
+	}
+	return false
+}
+
+func (t *task) SetPriority(updater user.User, p Priority) error {
+	if !t.allowToUpdate(updater) {
+		return errors.New("user is not allowed to update this task")
+	}
+	t.priority = p
+	t.updatedAt = time.Now()
+	return nil
+}
+
+func (t *task) SetDueDate(updater user.User, d time.Time) error {
+	if !t.allowToUpdate(updater) {
+		return errors.New("user is not allowed to update this task")
+	}
+	t.dueDate = sql.NullTime{Time: d, Valid: true}
+	t.updatedAt = time.Now()
+	return nil
+}
+
+func (t *task) SetDescription(updater user.User, desc string) error {
+	if !t.allowToUpdate(updater) {
+		return errors.New("user is not allowed to update this task")
+	}
+	t.description = sql.NullString{String: desc, Valid: desc != ""}
 	t.updatedAt = time.Now()
 	return nil
 }
@@ -229,24 +294,28 @@ func NewTask(creator user.User, uuid, title string) (Task, error) {
 		status:    StatusTodo,
 		createdBy: creator.UUID(),
 		createdAt: time.Now(),
+		priority:  PriorityMedium,
 	}, nil
 }
 
-func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time, deletedAt, archivedAt sql.NullTime) (Task, error) {
+func From(id, title, statusString, createdBy, assignedTo string, createdAt, updatedAt time.Time, deletedAt, archivedAt sql.NullTime, priority int, dueDate sql.NullTime, description sql.NullString) (Task, error) {
 	status, err := StatusFromString(statusString)
 	if err != nil {
 		return nil, err
 	}
 
 	return &task{
-		uuid:       id,
-		title:      title,
-		status:     status,
-		createdBy:  createdBy,
-		assignedTo: assignedTo,
-		createdAt:  createdAt,
-		updatedAt:  updatedAt,
-		deletedAt:  deletedAt,
-		archivedAt: archivedAt,
+		uuid:        id,
+		title:       title,
+		status:      status,
+		createdBy:   createdBy,
+		assignedTo:  assignedTo,
+		createdAt:   createdAt,
+		updatedAt:   updatedAt,
+		deletedAt:   deletedAt,
+		archivedAt:  archivedAt,
+		priority:    Priority(priority),
+		dueDate:     dueDate,
+		description: description,
 	}, nil
 }

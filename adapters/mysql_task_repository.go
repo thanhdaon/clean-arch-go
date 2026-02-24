@@ -15,15 +15,18 @@ import (
 )
 
 type MysqlTask struct {
-	ID         string       `db:"id"`
-	Title      string       `db:"title"`
-	Status     string       `db:"status"`
-	CreatedBy  string       `db:"created_by"`
-	AssignedTo string       `db:"assigned_to"`
-	CreatedAt  time.Time    `db:"created_at"`
-	UpdatedAt  sql.NullTime `db:"updated_at"`
-	DeletedAt  sql.NullTime `db:"deleted_at"`
-	ArchivedAt sql.NullTime `db:"archived_at"`
+	ID          string         `db:"id"`
+	Title       string         `db:"title"`
+	Status      string         `db:"status"`
+	CreatedBy   string         `db:"created_by"`
+	AssignedTo  string         `db:"assigned_to"`
+	CreatedAt   time.Time      `db:"created_at"`
+	UpdatedAt   sql.NullTime   `db:"updated_at"`
+	DeletedAt   sql.NullTime   `db:"deleted_at"`
+	ArchivedAt  sql.NullTime   `db:"archived_at"`
+	Priority    int            `db:"priority"`
+	DueDate     sql.NullTime   `db:"due_date"`
+	Description sql.NullString `db:"description"`
 }
 
 type MysqlTaskRepository struct {
@@ -38,20 +41,23 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 	op := errors.Op("MysqlTaskRepository.Add")
 
 	added := MysqlTask{
-		ID:         t.UUID(),
-		Title:      t.Title(),
-		Status:     t.Status().String(),
-		CreatedBy:  t.CreatedBy(),
-		AssignedTo: t.AssignedTo(),
-		CreatedAt:  t.CreatedAt(),
-		UpdatedAt:  timeToNullTime(t.UpdatedAt()),
+		ID:          t.UUID(),
+		Title:       t.Title(),
+		Status:      t.Status().String(),
+		CreatedBy:   t.CreatedBy(),
+		AssignedTo:  t.AssignedTo(),
+		CreatedAt:   t.CreatedAt(),
+		UpdatedAt:   timeToNullTime(t.UpdatedAt()),
+		Priority:    int(t.Priority()),
+		DueDate:     timeToNullTime(t.DueDate()),
+		Description: stringToNullString(t.Description()),
 	}
 
 	query := `
 		INSERT INTO tasks
-			(id, title, status, created_by, assigned_to, created_at, updated_at) 
-		VALUES 
-			(:id, :title, :status, :created_by, :assigned_to, :created_at, :updated_at)
+			(id, title, status, created_by, assigned_to, created_at, updated_at, priority, due_date, description)
+		VALUES
+			(:id, :title, :status, :created_by, :assigned_to, :created_at, :updated_at, :priority, :due_date, :description)
 	`
 
 	if _, err := r.db.NamedExecContext(ctx, query, added); err != nil {
@@ -88,24 +94,30 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 	}
 
 	updated := MysqlTask{
-		ID:         updatedTask.UUID(),
-		Title:      updatedTask.Title(),
-		Status:     updatedTask.Status().String(),
-		CreatedBy:  updatedTask.CreatedBy(),
-		AssignedTo: updatedTask.AssignedTo(),
-		CreatedAt:  updatedTask.CreatedAt(),
-		UpdatedAt:  timeToNullTime(updatedTask.UpdatedAt()),
+		ID:          updatedTask.UUID(),
+		Title:       updatedTask.Title(),
+		Status:      updatedTask.Status().String(),
+		CreatedBy:   updatedTask.CreatedBy(),
+		AssignedTo:  updatedTask.AssignedTo(),
+		CreatedAt:   updatedTask.CreatedAt(),
+		UpdatedAt:   timeToNullTime(updatedTask.UpdatedAt()),
+		Priority:    int(updatedTask.Priority()),
+		DueDate:     timeToNullTime(updatedTask.DueDate()),
+		Description: stringToNullString(updatedTask.Description()),
 	}
 
 	query := `
-		UPDATE tasks 
-		SET 
+		UPDATE tasks
+		SET
 			title = :title,
 			status = :status,
 			created_by = :created_by,
 			assigned_to = :assigned_to,
 			created_at = :created_at,
-			updated_at = :updated_at
+			updated_at = :updated_at,
+			priority = :priority,
+			due_date = :due_date,
+			description = :description
 		WHERE id = :id;
 	`
 	result, err := r.db.NamedExecContext(ctx, query, updated)
@@ -155,6 +167,7 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 	domainTask, err := task.From(
 		data.ID, data.Title, data.Status, data.CreatedBy, data.AssignedTo,
 		data.CreatedAt, nullTimeToTime(data.UpdatedAt), data.DeletedAt, data.ArchivedAt,
+		data.Priority, data.DueDate, data.Description,
 	)
 	if err != nil {
 		return nil, errors.E(op, err)
@@ -170,9 +183,34 @@ func (r MysqlTaskRepository) FindTasksForUser(ctx context.Context, userUUID stri
 func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {
 	op := errors.Op("MysqlTaskRepository.RemoveAllTasks")
 
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	if _, err := tx.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS = 0"); err != nil {
+		return errors.E(op, err)
+	}
+
+	if _, err := tx.ExecContext(ctx, "DELETE FROM task_tags"); err != nil {
+		return errors.E(op, err)
+	}
+
 	query := `TRUNCATE TABLE tasks`
 
-	if _, err := r.db.ExecContext(ctx, query); err != nil {
+	if _, err := tx.ExecContext(ctx, query); err != nil {
+		return errors.E(op, err)
+	}
+
+	if _, err := tx.ExecContext(ctx, "SET FOREIGN_KEY_CHECKS = 1"); err != nil {
+		return errors.E(op, err)
+	}
+
+	if err := tx.Commit(); err != nil {
 		return errors.E(op, err)
 	}
 

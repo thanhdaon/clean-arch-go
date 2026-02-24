@@ -47,6 +47,13 @@ func nullTimeToTime(nt sql.NullTime) time.Time {
 	return time.Time{}
 }
 
+func stringToNullString(s string) sql.NullString {
+	if s == "" {
+		return sql.NullString{}
+	}
+	return sql.NullString{String: s, Valid: true}
+}
+
 func fromMysqlTasksToQueryTasks(items []MysqlTask) []query.Task {
 	ret := []query.Task{}
 

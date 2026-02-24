@@ -170,6 +170,8 @@ func assertTasksEquals(t *testing.T, task1, task2 task.Task) {
 	require.Equal(t, task1.Status().String(), task2.Status().String())
 	require.Equal(t, task1.CreatedBy(), task2.CreatedBy())
 	require.Equal(t, task1.AssignedTo(), task2.AssignedTo())
+	require.Equal(t, task1.Priority(), task2.Priority())
+	require.Equal(t, task1.Description(), task2.Description())
 	compareTimesIgnoringNanoseconds(t, task1.CreatedAt(), task2.CreatedAt())
 	compareTimesIgnoringNanoseconds(t, task1.UpdatedAt(), task2.UpdatedAt())
 }

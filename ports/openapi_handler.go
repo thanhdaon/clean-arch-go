@@ -5,6 +5,7 @@ import (
 	"clean-arch-go/app/command"
 	"clean-arch-go/app/query"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/task"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -387,6 +388,141 @@ func (h HttpHandler) ArchiveTask(w http.ResponseWriter, r *http.Request, taskId 
 	err = h.app.Commands.ArchiveTask.Handle(r.Context(), command.ArchiveTask{
 		TaskId: taskId,
 		Caller: caller,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) SetTaskPriority(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.SetTaskPriority")
+
+	updater, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PutTaskPriority{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	priority, err := task.PriorityFromString(string(body.Priority))
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	err = h.app.Commands.SetTaskPriority.Handle(r.Context(), command.SetTaskPriority{
+		TaskId:   taskId,
+		Priority: priority,
+		Updater:  updater,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) SetTaskDueDate(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.SetTaskDueDate")
+
+	updater, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PutTaskDueDate{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	err = h.app.Commands.SetTaskDueDate.Handle(r.Context(), command.SetTaskDueDate{
+		TaskId:  taskId,
+		DueDate: body.DueDate,
+		Updater: updater,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) SetTaskDescription(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.SetTaskDescription")
+
+	updater, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PatchTaskDescription{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	desc := ""
+	if body.Description != nil {
+		desc = *body.Description
+	}
+
+	err = h.app.Commands.SetTaskDescription.Handle(r.Context(), command.SetTaskDescription{
+		TaskId:      taskId,
+		Description: desc,
+		Updater:     updater,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) AddTaskTag(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.AddTaskTag")
+
+	body := PostTaskTag{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	err := h.app.Commands.AddTaskTag.Handle(r.Context(), command.AddTaskTag{
+		TaskId:  taskId,
+		TagName: body.Name,
+	})
+
+	if err != nil {
+		badRequest(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) RemoveTaskTag(w http.ResponseWriter, r *http.Request, taskId string, tagId string) {
+	op := errors.Op("http.RemoveTaskTag")
+
+	err := h.app.Commands.RemoveTaskTag.Handle(r.Context(), command.RemoveTaskTag{
+		TagId: tagId,
 	})
 
 	if err != nil {

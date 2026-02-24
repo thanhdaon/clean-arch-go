@@ -16,6 +16,14 @@ const (
 	PostUserRoleEmployer PostUserRole = "employer"
 )
 
+// Defines values for PriorityEnum.
+const (
+	PriorityEnumLow    PriorityEnum = "low"
+	PriorityEnumMedium PriorityEnum = "medium"
+	PriorityEnumHigh   PriorityEnum = "high"
+	PriorityEnumUrgent PriorityEnum = "urgent"
+)
+
 // Defines values for PutTaskStatusStatus.
 const (
 	Done       PutTaskStatusStatus = "done"
@@ -61,6 +69,29 @@ type LoginResponse struct {
 // PatchTaskTitle defines model for PatchTaskTitle.
 type PatchTaskTitle struct {
 	Title string `json:"title"`
+}
+
+// PatchTaskDescription defines model for PatchTaskDescription.
+type PatchTaskDescription struct {
+	Description *string `json:"description"`
+}
+
+// PostTaskTag defines model for PostTaskTag.
+type PostTaskTag struct {
+	Name string `json:"name"`
+}
+
+// PriorityEnum defines model for PriorityEnum.
+type PriorityEnum string
+
+// PutTaskDueDate defines model for PutTaskDueDate.
+type PutTaskDueDate struct {
+	DueDate time.Time `json:"due_date"`
+}
+
+// PutTaskPriority defines model for PutTaskPriority.
+type PutTaskPriority struct {
+	Priority PriorityEnum `json:"priority"`
 }
 
 // PatchUser defines model for PatchUser.
@@ -144,3 +175,15 @@ type UpdateUserProfileJSONRequestBody = PatchUser
 
 // UpdateUserRoleJSONRequestBody defines body for UpdateUserRole for application/json ContentType.
 type UpdateUserRoleJSONRequestBody = PutUserRole
+
+// SetTaskPriorityJSONRequestBody defines body for SetTaskPriority for application/json ContentType.
+type SetTaskPriorityJSONRequestBody = PutTaskPriority
+
+// SetTaskDueDateJSONRequestBody defines body for SetTaskDueDate for application/json ContentType.
+type SetTaskDueDateJSONRequestBody = PutTaskDueDate
+
+// SetTaskDescriptionJSONRequestBody defines body for SetTaskDescription for application/json ContentType.
+type SetTaskDescriptionJSONRequestBody = PatchTaskDescription
+
+// AddTaskTagJSONRequestBody defines body for AddTaskTag for application/json ContentType.
+type AddTaskTagJSONRequestBody = PostTaskTag

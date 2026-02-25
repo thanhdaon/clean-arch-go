@@ -310,12 +310,14 @@ paths:
       responses:
         "200":
           description: Task successfully deleted
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /tasks/{taskId}/assign/{assigneeId}:
     put:
       tags:

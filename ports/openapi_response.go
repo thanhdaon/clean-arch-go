@@ -27,22 +27,27 @@ func MapErrorToStatus(err error) int {
 	}
 }
 
-func internalError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	responseError(ctx, err, w, r, http.StatusInternalServerError)
-}
-
-func unauthorised(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	responseError(ctx, err, w, r, http.StatusUnauthorized)
-}
-
-func badRequest(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	responseError(ctx, err, w, r, http.StatusBadRequest)
-}
-
-func responseError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request, status int) {
+func ResponseError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
+	status := MapErrorToStatus(err)
 	render.Respond(w, r, map[string]any{
 		"error":    err.Error(),
 		"status":   status,
+		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
+	})
+}
+
+func internalError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
+	ResponseError(ctx, errors.E(errkind.Internal, err), w, r)
+}
+
+func unauthorised(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
+	ResponseError(ctx, err, w, r)
+}
+
+func badRequest(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
+	render.Respond(w, r, map[string]any{
+		"error":    err.Error(),
+		"status":   http.StatusBadRequest,
 		"trace_id": trace.SpanContextFromContext(ctx).TraceID(),
 	})
 }

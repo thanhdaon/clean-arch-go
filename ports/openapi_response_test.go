@@ -3,7 +3,10 @@ package ports_test
 import (
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
+	"clean-arch-go/ports"
+	"context"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -59,8 +62,39 @@ func TestMapErrorToStatus(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := MapErrorToStatus(tt.err)
+			result := ports.MapErrorToStatus(tt.err)
 			require.Equal(t, tt.expected, result)
+		})
+	}
+}
+
+func TestResponseErrorWithMapper(t *testing.T) {
+	tests := []struct {
+		name           string
+		err            error
+		expectedStatus int
+	}{
+		{
+			name:           "not exist returns 404",
+			err:            errors.E(errors.Op("test"), errkind.NotExist, "item not found"),
+			expectedStatus: http.StatusNotFound,
+		},
+		{
+			name:           "authorization returns 401",
+			err:            errors.E(errors.Op("test"), errkind.Authorization, "unauthorized"),
+			expectedStatus: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := httptest.NewRecorder()
+			r := httptest.NewRequest("GET", "/", nil)
+			ctx := context.Background()
+
+			ports.ResponseError(ctx, tt.err, w, r)
+
+			require.Equal(t, tt.expectedStatus, w.Code)
 		})
 	}
 }

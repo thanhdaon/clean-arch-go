@@ -36,6 +36,15 @@ func (s *VideoServiceStub) CallCount() int {
 	return s.calls
 }
 
+// CallCountSnapshot returns the current call count for use as a baseline.
+// Compare against a later CallCount() to assert exactly how many calls
+// a specific operation made, independent of prior test runs.
+func (s *VideoServiceStub) CallCountSnapshot() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.calls
+}
+
 type TestFixtures struct {
 	DB           *sqlx.DB
 	VideoService *VideoServiceStub

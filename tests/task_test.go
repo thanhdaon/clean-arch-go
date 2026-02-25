@@ -111,12 +111,15 @@ func testSetTaskDueDate(t *testing.T, f *TestFixtures) {
 	creatorID := createUserAndGetID(t, f.DB)
 	taskID := createTaskAndGetID(t, f.DB, f.AuthToken, creatorID)
 
+	expectedDueDate := "2027-03-01T10:00:00Z"
 	resp, body := putTaskDueDate(t, f.AuthToken, taskID, map[string]any{
-		"due_date": "2027-03-01T10:00:00Z",
+		"due_date": expectedDueDate,
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	assertTaskHasDueDate(t, f.DB, taskID)
+	expectedTime, err := time.Parse(time.RFC3339, expectedDueDate)
+	require.NoError(t, err, "failed to parse expected due date")
+	assertTaskFieldEquals(t, f.DB, taskID, "due_date", expectedTime)
 }
 
 func testSetTaskDescription(t *testing.T, f *TestFixtures) {

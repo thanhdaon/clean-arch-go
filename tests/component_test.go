@@ -19,4 +19,20 @@ func TestComponent(t *testing.T) {
 	t.Run("get_user", func(t *testing.T) {
 		testGetUser(t, fixtures)
 	})
+
+	t.Run("login", func(t *testing.T) {
+		testLogin(t, fixtures)
+	})
+
+	t.Run("update_user_profile", func(t *testing.T) {
+		testUpdateUserProfile(t, fixtures)
+	})
+
+	t.Run("update_user_role", func(t *testing.T) {
+		testUpdateUserRole(t, fixtures)
+	})
+
+	t.Run("delete_user", func(t *testing.T) {
+		testDeleteUser(t, fixtures)
+	})
 }

@@ -2,9 +2,9 @@ package tracer
 
 import (
 	"context"
+	"fmt"
 	"os"
 
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
@@ -13,19 +13,19 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-func SetupTracer() func() {
+func SetupTracer() (*trace.TracerProvider, error) {
 	ctx := context.Background()
 
 	jaegerEndpoint := os.Getenv("JAEGER_ENDPOINT")
 	if jaegerEndpoint == "" {
-		logrus.Fatalln("Missing JAEGER_ENDPOINT env")
+		return nil, fmt.Errorf("missing JAEGER_ENDPOINT env")
 	}
 
 	exporter, err := otlptracehttp.New(ctx,
 		otlptracehttp.WithEndpointURL(jaegerEndpoint),
 	)
 	if err != nil {
-		logrus.Fatalf("Failed to create OTLP HTTP exporter: %v", err)
+		return nil, fmt.Errorf("failed to create OTLP HTTP exporter: %w", err)
 	}
 
 	resource := resource.NewWithAttributes(
@@ -45,9 +45,5 @@ func SetupTracer() func() {
 		propagation.Baggage{},
 	))
 
-	return func() {
-		if err := tracerProvider.Shutdown(ctx); err != nil {
-			logrus.Fatalf("Failed to shut down tracer provider: %v", err)
-		}
-	}
+	return tracerProvider, nil
 }

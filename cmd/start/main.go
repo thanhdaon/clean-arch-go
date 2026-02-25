@@ -1,77 +1,43 @@
 package main
 
 import (
+	"context"
+	"os/signal"
+	"syscall"
+
 	"clean-arch-go/adapters"
-	"clean-arch-go/app"
-	"clean-arch-go/app/command"
-	"clean-arch-go/app/query"
-	"clean-arch-go/core/auth"
+	"clean-arch-go/bootstrap"
 	"clean-arch-go/core/logs"
 	"clean-arch-go/core/tracer"
-	"clean-arch-go/ports"
-	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
 	logs.Init()
-
 	logger := logrus.NewEntry(logrus.StandardLogger())
-
-	httpclient := adapters.NewHttpClient()
 
 	mysqlDB, err := adapters.NewMySQLConnection()
 	if err != nil {
 		logger.Fatalln("Can not connect to mysql", err)
 	}
 
-	shutdownTracer := tracer.SetupTracer()
-	defer shutdownTracer()
-
-	app := newApplication(mysqlDB, httpclient, logger)
-
-	ports.RunHTTPServer(func(router chi.Router) http.Handler {
-		return ports.HandlerFromMux(ports.NewHttpHandler(app), router)
-	})
-}
-
-func newApplication(db *sqlx.DB, httpclient *http.Client, logger *logrus.Entry) app.Application {
-	id := adapters.NewID()
-	taskRepository := adapters.NewMysqlTaskRepository(db)
-	userRepository := adapters.NewMysqlUserRepository(db)
-	videoService := adapters.NewVideoService(httpclient)
-	authService := auth.NewAuth("secret-key-for-development")
-
-	application := app.Application{
-		Commands: app.Commands{
-			AddUser:            command.NewAddUserHandler(id, userRepository, videoService, logger),
-			UpdateUserRole:     command.NewUpdateUserRoleHandler(userRepository, logger),
-			DeleteUser:         command.NewDeleteUserHandler(userRepository, logger),
-			UpdateUserProfile:  command.NewUpdateUserProfileHandler(userRepository, logger),
-			CreateTask:         command.NewCreateTaskHandler(id, taskRepository, logger),
-			ChangeTaskStatus:   command.NewChangeTaskStatusHandler(taskRepository, logger),
-			AssignTask:         command.NewAssignTaskHandler(taskRepository, userRepository, logger),
-			UpdateTaskTitle:    command.NewUpdateTaskTitleHandler(taskRepository, logger),
-			UnassignTask:       command.NewUnassignTaskHandler(taskRepository, logger),
-			ReopenTask:         command.NewReopenTaskHandler(taskRepository, logger),
-			DeleteTask:         command.NewDeleteTaskHandler(taskRepository, logger),
-			ArchiveTask:        command.NewArchiveTaskHandler(taskRepository, logger),
-			SetTaskPriority:    command.NewSetTaskPriorityHandler(taskRepository, logger),
-			SetTaskDueDate:     command.NewSetTaskDueDateHandler(taskRepository, logger),
-			SetTaskDescription: command.NewSetTaskDescriptionHandler(taskRepository, logger),
-			AddTaskTag:         command.NewAddTaskTagHandler(taskRepository, logger),
-			RemoveTaskTag:      command.NewRemoveTaskTagHandler(taskRepository, logger),
-		},
-		Queries: app.Queries{
-			Tasks: query.NewTaskHandler(taskRepository, logger),
-			User:  query.NewUserHandler(userRepository, logger),
-			Users: query.NewUsersHandler(userRepository, logger),
-			Login: query.NewLoginHandler(userRepository, authService, logger),
-		},
+	traceProvider, err := tracer.SetupTracer()
+	if err != nil {
+		logger.Fatalln("Failed to setup tracer", err)
 	}
 
-	return application
+	svc, err := bootstrap.New(mysqlDB, traceProvider, logger)
+	if err != nil {
+		logger.Fatalln("Failed to create service", err)
+	}
+
+	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	if err := svc.Run(ctx); err != nil {
+		logger.WithError(err).Error("Service run error")
+	}
+
+	logger.Info("Service stopped")
 }

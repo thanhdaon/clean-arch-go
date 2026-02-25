@@ -15,34 +15,47 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
-	runHTTPServerOnAddr(":"+os.Getenv("PORT"), createHandler)
+func NewHTTPServer(createHandler func(router chi.Router) http.Handler) *http.Server {
+	return newHTTPServerOnAddr(":"+os.Getenv("PORT"), createHandler)
 }
 
-func runHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http.Handler) {
+func newHTTPServerOnAddr(addr string, createHandler func(router chi.Router) http.Handler) *http.Server {
 	apiRouter := chi.NewRouter()
-	setMiddlewares(apiRouter)
+	SetMiddlewares(apiRouter)
 
 	rootRouter := chi.NewRouter()
 	rootRouter.Mount("/api", createHandler(apiRouter))
-	setSwaggerDoc(rootRouter)
+	SetSwaggerDoc(rootRouter)
 
-	logrus.Info("Starting HTTP server on ", addr)
-	logrus.Info("API Documentation ", "http://localhost:8000/doc/index.html")
+	if addr == ":" {
+		addr = ":8080"
+	}
 
-	if err := http.ListenAndServe(addr, rootRouter); err != nil {
+	return &http.Server{
+		Addr:    addr,
+		Handler: rootRouter,
+	}
+}
+
+func RunHTTPServer(createHandler func(router chi.Router) http.Handler) {
+	server := NewHTTPServer(createHandler)
+
+	logrus.Info("Starting HTTP server on ", server.Addr)
+	logrus.Info("API Documentation http://localhost", server.Addr, "/doc/index.html")
+
+	if err := server.ListenAndServe(); err != nil {
 		logrus.WithError(err).Panic("Unable to start HTTP server")
 	}
 }
 
-func setSwaggerDoc(router *chi.Mux) {
+func SetSwaggerDoc(router *chi.Mux) {
 	router.Get("/doc/*", httpSwagger.Handler(httpSwagger.URL("/doc.yml")))
 	router.Get("/doc.yml", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "ports/openapi.yml")
 	})
 }
 
-func setMiddlewares(router *chi.Mux) {
+func SetMiddlewares(router *chi.Mux) {
 	router.Use(middleware.RealIP)
 	router.Use(logs.NewStructuredLogger(logrus.StandardLogger()))
 	router.Use(middleware.Recoverer)

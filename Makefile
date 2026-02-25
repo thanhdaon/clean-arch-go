@@ -12,6 +12,9 @@ test:
 component-test:
 	go test ./tests/...
 
+integration-test:
+	go test ./adapters/...
+
 start:
 	go run cmd/start/main.go
 

@@ -47,8 +47,6 @@ func TestMsqlTaskRepository_Add(t *testing.T) {
 }
 
 func TestMysqlTaskRepository_AllTasks(t *testing.T) {
-	t.Parallel()
-
 	taskRepository := newMysqlTaskRepository(t)
 
 	err := taskRepository.RemoveAllTasks(context.Background())

@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
@@ -170,4 +171,322 @@ func assertUserDeletedInDB(t *testing.T, db *sqlx.DB, userID string) {
 	err := db.Get(&count, "SELECT COUNT(*) FROM users WHERE id = ? AND deleted_at IS NOT NULL", userID)
 	require.NoError(t, err)
 	require.Equal(t, 1, count, "user %s should be soft-deleted in DB", userID)
+}
+
+func createTask(t *testing.T, token string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, baseURL()+"/api/tasks", bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func getTasks(t *testing.T, token string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, baseURL()+"/api/tasks", nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func deleteTask(t *testing.T, token, taskID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/tasks/%s", baseURL(), taskID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func patchTaskTitle(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPatch, fmt.Sprintf("%s/api/tasks/%s", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func putTaskStatus(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/status", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func putTaskPriority(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/priority", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func putTaskDueDate(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/due-date", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func patchTaskDescription(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPatch, fmt.Sprintf("%s/api/tasks/%s/description", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func addTaskTag(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/tasks/%s/tags", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func removeTaskTag(t *testing.T, token, taskID, tagID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/tasks/%s/tags/%s", baseURL(), taskID, tagID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func assignTask(t *testing.T, token, taskID, assigneeID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/assign/%s", baseURL(), taskID, assigneeID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func unassignTask(t *testing.T, token, taskID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/tasks/%s/assign", baseURL(), taskID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func reopenTask(t *testing.T, token, taskID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/reopen", baseURL(), taskID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func archiveTask(t *testing.T, token, taskID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodPut, fmt.Sprintf("%s/api/tasks/%s/archive", baseURL(), taskID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func assertTaskExistsInDB(t *testing.T, db *sqlx.DB, taskID string) {
+	t.Helper()
+
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM tasks WHERE id = ? AND deleted_at IS NULL", taskID)
+	require.NoError(t, err)
+	require.Equal(t, 1, count, "task %s should exist in DB", taskID)
+}
+
+func assertTaskDeletedInDB(t *testing.T, db *sqlx.DB, taskID string) {
+	t.Helper()
+
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM tasks WHERE id = ? AND deleted_at IS NOT NULL", taskID)
+	require.NoError(t, err)
+	require.Equal(t, 1, count, "task %s should be soft-deleted in DB", taskID)
+}
+
+func createUserAndGetID(t *testing.T, db *sqlx.DB) string {
+	t.Helper()
+
+	email := fmt.Sprintf("task-creator-%d@example.com", time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     "employee",
+		"name":     "Task Creator",
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var userID string
+	err := db.Get(&userID, "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email)
+	require.NoError(t, err)
+	return userID
+}
+
+func createTaskAndGetID(t *testing.T, db *sqlx.DB, token, creatorID string) string {
+	t.Helper()
+
+	title := fmt.Sprintf("Task-%d", time.Now().UnixNano())
+	resp, body := createTask(t, token, map[string]any{
+		"title":   title,
+		"creator": creatorID,
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var taskID string
+	err := db.Get(&taskID, "SELECT id FROM tasks WHERE title = ? AND deleted_at IS NULL", title)
+	require.NoError(t, err)
+	return taskID
 }

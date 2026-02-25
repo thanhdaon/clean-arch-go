@@ -27,7 +27,7 @@ func main() {
 		logger.Fatalln("Failed to setup tracer", err)
 	}
 
-	svc, err := bootstrap.New(mysqlDB, traceProvider, logger)
+	svc, err := bootstrap.New(mysqlDB, traceProvider, logger, nil)
 	if err != nil {
 		logger.Fatalln("Failed to create service", err)
 	}

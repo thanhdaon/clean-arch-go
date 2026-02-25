@@ -26,9 +26,12 @@ type Service struct {
 	traceProvider *trace.TracerProvider
 }
 
-func New(db *sqlx.DB, tracerProvider *trace.TracerProvider, logger *logrus.Entry) (Service, error) {
-	httpclient := adapters.NewHttpClient()
-	application := newApplication(db, httpclient, logger)
+func New(db *sqlx.DB, tracerProvider *trace.TracerProvider, logger *logrus.Entry, videoSvc command.VideoService) (Service, error) {
+	if videoSvc == nil {
+		httpclient := adapters.NewHttpClient()
+		videoSvc = adapters.NewVideoService(httpclient)
+	}
+	application := newApplication(db, videoSvc, logger)
 
 	httpServer := ports.NewHTTPServer(func(router chi.Router) stdHTTP.Handler {
 		return ports.HandlerFromMux(ports.NewHttpHandler(application), router)
@@ -82,16 +85,15 @@ func (s Service) Run(ctx context.Context) error {
 	return nil
 }
 
-func newApplication(db *sqlx.DB, httpclient *stdHTTP.Client, logger *logrus.Entry) app.Application {
+func newApplication(db *sqlx.DB, videoSvc command.VideoService, logger *logrus.Entry) app.Application {
 	id := adapters.NewID()
 	taskRepository := adapters.NewMysqlTaskRepository(db)
 	userRepository := adapters.NewMysqlUserRepository(db)
-	videoService := adapters.NewVideoService(httpclient)
 	authService := auth.NewAuth("secret-key-for-development")
 
 	application := app.Application{
 		Commands: app.Commands{
-			AddUser:            command.NewAddUserHandler(id, userRepository, videoService, logger),
+			AddUser:            command.NewAddUserHandler(id, userRepository, videoSvc, logger),
 			UpdateUserRole:     command.NewUpdateUserRoleHandler(userRepository, logger),
 			DeleteUser:         command.NewDeleteUserHandler(userRepository, logger),
 			UpdateUserProfile:  command.NewUpdateUserProfileHandler(userRepository, logger),

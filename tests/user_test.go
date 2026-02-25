@@ -108,3 +108,110 @@ func testGetUser(t *testing.T, f *TestFixtures) {
 	require.NoError(t, err)
 	assert.Contains(t, errorResult["error"], "item does not exist")
 }
+
+func testLogin(t *testing.T, f *TestFixtures) {
+	t.Helper()
+
+	email := fmt.Sprintf("login-%d@example.com", time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     "employee",
+		"name":     "Login User",
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	resp, body = login(t, map[string]any{
+		"email":    email,
+		"password": "password123",
+	})
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+
+	var result map[string]any
+	err := json.Unmarshal(body, &result)
+	require.NoError(t, err)
+	assert.NotEmpty(t, result["token"], "response should contain a token")
+	assert.NotNil(t, result["user"], "response should contain a user object")
+}
+
+func testUpdateUserProfile(t *testing.T, f *TestFixtures) {
+	t.Helper()
+
+	email := fmt.Sprintf("update-profile-%d@example.com", time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     "employee",
+		"name":     "Original Name",
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var userID string
+	err := f.DB.Get(&userID, "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email)
+	require.NoError(t, err)
+
+	newEmail := fmt.Sprintf("updated-%d@example.com", time.Now().UnixNano())
+	resp, body = patchUser(t, f.AuthToken, userID, map[string]any{
+		"name":  "Updated Name",
+		"email": newEmail,
+	})
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+
+	var name, storedEmail string
+	err = f.DB.QueryRow(
+		"SELECT name, email FROM users WHERE id = ? AND deleted_at IS NULL",
+		userID,
+	).Scan(&name, &storedEmail)
+	require.NoError(t, err)
+	assert.Equal(t, "Updated Name", name)
+	assert.Equal(t, newEmail, storedEmail)
+}
+
+func testUpdateUserRole(t *testing.T, f *TestFixtures) {
+	t.Helper()
+
+	email := fmt.Sprintf("update-role-%d@example.com", time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     "employee",
+		"name":     "Role User",
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var userID string
+	err := f.DB.Get(&userID, "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email)
+	require.NoError(t, err)
+
+	resp, body = putUserRole(t, f.AuthToken, userID, map[string]any{
+		"role": "employer",
+	})
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+
+	var role string
+	err = f.DB.Get(&role, "SELECT role FROM users WHERE id = ?", userID)
+	require.NoError(t, err)
+	assert.Equal(t, "employer", role)
+}
+
+func testDeleteUser(t *testing.T, f *TestFixtures) {
+	t.Helper()
+
+	email := fmt.Sprintf("delete-user-%d@example.com", time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     "employee",
+		"name":     "Delete User",
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var userID string
+	err := f.DB.Get(&userID, "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email)
+	require.NoError(t, err)
+
+	resp, body = deleteUser(t, f.AuthToken, userID)
+	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+
+	assertUserDeletedInDB(t, f.DB, userID)
+}

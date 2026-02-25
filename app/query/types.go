@@ -3,13 +3,13 @@ package query
 import "time"
 
 type Task struct {
-	UUID       string
-	Title      string
-	Status     string
-	CreatedBy  string
-	AssignedTo string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	UUID       string    `json:"uuid"`
+	Title      string    `json:"title"`
+	Status     string    `json:"status"`
+	CreatedBy  string    `json:"created_by"`
+	AssignedTo string    `json:"assigned_to"`
+	CreatedAt  time.Time `json:"created_at"`
+	UpdatedAt  time.Time `json:"updated_at"`
 }
 
 type UserDTO struct {

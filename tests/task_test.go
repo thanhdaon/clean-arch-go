@@ -14,12 +14,9 @@ import (
 func testCreateTask(t *testing.T, f *TestFixtures) {
 	t.Helper()
 
-	creatorID := createUserAndGetID(t, f.DB)
-
 	title := fmt.Sprintf("Create-Task-%d", time.Now().UnixNano())
 	resp, body := createTask(t, f.AuthToken, map[string]any{
-		"title":   title,
-		"creator": creatorID,
+		"title": title,
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
@@ -32,12 +29,10 @@ func testCreateTask(t *testing.T, f *TestFixtures) {
 func testGetTasks(t *testing.T, f *TestFixtures) {
 	t.Helper()
 
-	creatorID := createUserAndGetID(t, f.DB)
 	title := fmt.Sprintf("GetTasks-Task-%d", time.Now().UnixNano())
 
 	resp, body := createTask(t, f.AuthToken, map[string]any{
-		"title":   title,
-		"creator": creatorID,
+		"title": title,
 	})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
 
@@ -166,7 +161,7 @@ func testAddTaskTag(t *testing.T, f *TestFixtures) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
 	var count int
-	err := f.DB.Get(&count, "SELECT COUNT(*) FROM tags WHERE task_id = ? AND name = ?", taskID, "bug")
+	err := f.DB.Get(&count, "SELECT COUNT(*) FROM task_tags WHERE task_id = ? AND name = ?", taskID, "bug")
 	require.NoError(t, err)
 	assert.Equal(t, 1, count, "tag 'bug' should exist for task %s", taskID)
 }
@@ -183,14 +178,14 @@ func testRemoveTaskTag(t *testing.T, f *TestFixtures) {
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed adding tag: %s", string(body))
 
 	var tagID string
-	err := f.DB.Get(&tagID, "SELECT id FROM tags WHERE task_id = ? AND name = ?", taskID, "to-remove")
+	err := f.DB.Get(&tagID, "SELECT id FROM task_tags WHERE task_id = ? AND name = ?", taskID, "to-remove")
 	require.NoError(t, err)
 
 	resp, body = removeTaskTag(t, f.AuthToken, taskID, tagID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
 	var count int
-	err = f.DB.Get(&count, "SELECT COUNT(*) FROM tags WHERE id = ?", tagID)
+	err = f.DB.Get(&count, "SELECT COUNT(*) FROM task_tags WHERE id = ?", tagID)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count, "tag %s should be removed from DB", tagID)
 }

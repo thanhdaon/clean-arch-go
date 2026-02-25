@@ -105,6 +105,8 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 		Priority:    int(updatedTask.Priority()),
 		DueDate:     timeToNullTime(updatedTask.DueDate()),
 		Description: stringToNullString(updatedTask.Description()),
+		DeletedAt:   timeToNullTime(updatedTask.DeletedAt()),
+		ArchivedAt:  timeToNullTime(updatedTask.ArchivedAt()),
 	}
 
 	query := `
@@ -118,7 +120,9 @@ func (r MysqlTaskRepository) UpdateByID(ctx context.Context, uuid string, update
 			updated_at = :updated_at,
 			priority = :priority,
 			due_date = :due_date,
-			description = :description
+			description = :description,
+			deleted_at = :deleted_at,
+			archived_at = :archived_at
 		WHERE id = :id;
 	`
 	result, err := r.db.NamedExecContext(ctx, query, updated)

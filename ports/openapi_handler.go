@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -243,18 +244,30 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	op := errors.Op("http.CreateTask")
 	ctx := r.Context()
 
+	logrus.Info("CreateTask called")
+
 	user, err := userFromCtx(ctx)
 	if err != nil {
 		unauthorised(ctx, errors.E(op, err), w, r)
 		return
 	}
 
+	body := PostTask{}
+	if err := render.Decode(r, &body); err != nil {
+		logrus.WithError(err).Error("Failed to decode request body")
+		badRequest(ctx, err, w, r)
+		return
+	}
+
+	logrus.Infof("Creating task with title: %s, creator: %s", body.Title, user.UUID())
+
 	err = h.app.Commands.CreateTask.Handle(ctx, command.CreateTask{
-		Title:   "",
+		Title:   body.Title,
 		Creator: user,
 	})
 
 	if err != nil {
+		logrus.WithError(err).Errorf("CreateTask failed: %v", err)
 		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}

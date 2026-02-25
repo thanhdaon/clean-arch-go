@@ -462,7 +462,7 @@ func createUserAndGetID(t *testing.T, db *sqlx.DB) string {
 
 	email := fmt.Sprintf("task-creator-%d@example.com", time.Now().UnixNano())
 	resp, body := postUser(t, map[string]any{
-		"role":     "employee",
+		"role":     "employer",
 		"name":     "Task Creator",
 		"email":    email,
 		"password": "password123",
@@ -480,8 +480,7 @@ func createTaskAndGetID(t *testing.T, db *sqlx.DB, token, creatorID string) stri
 
 	title := fmt.Sprintf("Task-%d", time.Now().UnixNano())
 	resp, body := createTask(t, token, map[string]any{
-		"title":   title,
-		"creator": creatorID,
+		"title": title,
 	})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
 

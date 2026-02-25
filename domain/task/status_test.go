@@ -18,7 +18,7 @@ func TestStatusFromString_ValidStatuses(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, task.StatusPending, status)
 
-	status, err = task.StatusFromString("inprogress")
+	status, err = task.StatusFromString("in_progress")
 	require.NoError(t, err)
 	require.Equal(t, task.StatusInProgress, status)
 
@@ -41,7 +41,7 @@ func TestStatus_StringMethod(t *testing.T) {
 
 	require.Equal(t, "todo", task.StatusTodo.String())
 	require.Equal(t, "pending", task.StatusPending.String())
-	require.Equal(t, "inprogress", task.StatusInProgress.String())
+	require.Equal(t, "in_progress", task.StatusInProgress.String())
 	require.Equal(t, "completed", task.StatusCompleted.String())
 }
 

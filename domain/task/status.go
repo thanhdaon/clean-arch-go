@@ -6,7 +6,7 @@ var (
 	StatusUnknow     = Status{}
 	StatusTodo       = Status{"todo"}
 	StatusPending    = Status{"pending"}
-	StatusInProgress = Status{"inprogress"}
+	StatusInProgress = Status{"in_progress"}
 	StatusCompleted  = Status{"completed"}
 )
 
@@ -31,6 +31,8 @@ func StatusFromString(s string) (Status, error) {
 	case StatusInProgress.slug:
 		return StatusInProgress, nil
 	case StatusCompleted.slug:
+		return StatusCompleted, nil
+	case "done":
 		return StatusCompleted, nil
 	default:
 		return StatusUnknow, errors.New("unknow status: " + s)

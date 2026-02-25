@@ -33,7 +33,7 @@ func TestNewTask_InvalidRole(t *testing.T) {
 	tk, err := task.NewTask(creator, "task-uuid", "Initial Title")
 	require.Error(t, err)
 	require.Nil(t, tk)
-	require.EqualError(t, err, "only employ can create task")
+	require.EqualError(t, err, "only employer or admin can create task")
 }
 
 func TestUpdateTitle(t *testing.T) {

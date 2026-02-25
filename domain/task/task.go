@@ -102,7 +102,7 @@ func (t *task) ChangeStatus(updater user.User, s Status) error {
 }
 
 func (t *task) allowToChangeStatus(updater user.User) bool {
-	if updater.Role() == user.RoleEmployer {
+	if updater.Role() == user.RoleEmployer || updater.Role() == user.RoleAdmin {
 		return true
 	}
 
@@ -129,7 +129,7 @@ func (t *task) UpdateTitle(updater user.User, title string) error {
 }
 
 func (t *task) allowToUpdateTitle(updater user.User) bool {
-	if updater.Role() == user.RoleEmployer {
+	if updater.Role() == user.RoleEmployer || updater.Role() == user.RoleAdmin {
 		return true
 	}
 
@@ -152,7 +152,7 @@ func (t *task) AssignTo(assigner user.User, assignee user.User) error {
 }
 
 func (t *task) Unassign(remover user.User) error {
-	if remover.Role() != user.RoleEmployer {
+	if remover.Role() != user.RoleEmployer && remover.Role() != user.RoleAdmin {
 		return errors.New("only employer can unassign task")
 	}
 
@@ -186,10 +186,10 @@ func (t *task) DeletedAt() time.Time {
 }
 
 func (t *task) Delete(deleter user.User) error {
-	if deleter.Role() != user.RoleEmployer {
+	if deleter.Role() != user.RoleEmployer && deleter.Role() != user.RoleAdmin {
 		return errors.New("only employer can delete task")
 	}
-	if deleter.UUID() != t.createdBy {
+	if deleter.Role() != user.RoleAdmin && deleter.UUID() != t.createdBy {
 		return errors.New("only task creator can delete task")
 	}
 	t.deletedAt = sql.NullTime{Time: time.Now(), Valid: true}
@@ -227,11 +227,8 @@ func (t *task) Description() string {
 }
 
 func (t *task) Archive(archiver user.User) error {
-	if archiver.Role() != user.RoleEmployer {
+	if archiver.Role() != user.RoleEmployer && archiver.Role() != user.RoleAdmin {
 		return errors.New("only employer can archive task")
-	}
-	if t.status != StatusCompleted {
-		return errors.New("only completed tasks can be archived")
 	}
 	t.archivedAt = sql.NullTime{Time: time.Now(), Valid: true}
 	t.updatedAt = time.Now()
@@ -239,7 +236,7 @@ func (t *task) Archive(archiver user.User) error {
 }
 
 func (t *task) allowToUpdate(updater user.User) bool {
-	if updater.Role() == user.RoleEmployer {
+	if updater.Role() == user.RoleEmployer || updater.Role() == user.RoleAdmin {
 		return true
 	}
 	if updater.UUID() == t.assignedTo {
@@ -276,8 +273,9 @@ func (t *task) SetDescription(updater user.User, desc string) error {
 }
 
 func NewTask(creator user.User, uuid, title string) (Task, error) {
-	if role := creator.Role(); role != user.RoleEmployer {
-		return nil, errors.New("only employ can create task")
+	role := creator.Role()
+	if role != user.RoleEmployer && role != user.RoleAdmin {
+		return nil, errors.New("only employer or admin can create task")
 	}
 
 	if uuid == "" {

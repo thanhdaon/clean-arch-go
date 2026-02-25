@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
-func MapErrorToStatus(err error) int {
+func mapErrorToStatus(err error) int {
 	switch {
 	case errors.Is(errkind.Authorization, err):
 		return http.StatusUnauthorized
@@ -27,8 +27,8 @@ func MapErrorToStatus(err error) int {
 	}
 }
 
-func ResponseError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	status := MapErrorToStatus(err)
+func responseError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
+	status := mapErrorToStatus(err)
 	render.Respond(w, r, map[string]any{
 		"error":    err.Error(),
 		"status":   status,
@@ -37,7 +37,7 @@ func ResponseError(ctx context.Context, err error, w http.ResponseWriter, r *htt
 }
 
 func unauthorised(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	ResponseError(ctx, err, w, r)
+	responseError(ctx, err, w, r)
 }
 
 func badRequest(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {

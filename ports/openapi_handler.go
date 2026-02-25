@@ -35,7 +35,7 @@ func (h HttpHandler) GetTasks(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		ResponseError(ctx, errors.E(op, err), w, r)
+		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -68,7 +68,7 @@ func (h HttpHandler) ChangeTaskStatus(w http.ResponseWriter, r *http.Request, ta
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -92,7 +92,7 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -105,7 +105,7 @@ func (h HttpHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.app.Queries.Users.Handle(ctx, query.UsersQuery{})
 	if err != nil {
-		ResponseError(ctx, errors.E(op, err), w, r)
+		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h HttpHandler) GetUser(w http.ResponseWriter, r *http.Request, userId stri
 	})
 
 	if err != nil {
-		ResponseError(ctx, errors.E(op, err), w, r)
+		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -144,7 +144,7 @@ func (h HttpHandler) DeleteUser(w http.ResponseWriter, r *http.Request, userId s
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (h HttpHandler) UpdateUserProfile(w http.ResponseWriter, r *http.Request, u
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -205,7 +205,7 @@ func (h HttpHandler) UpdateUserRole(w http.ResponseWriter, r *http.Request, user
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -227,7 +227,7 @@ func (h HttpHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -255,7 +255,7 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		ResponseError(ctx, errors.E(op, err), w, r)
+		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}
 
@@ -296,7 +296,7 @@ func (h HttpHandler) UnassignTask(w http.ResponseWriter, r *http.Request, taskId
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -325,7 +325,7 @@ func (h HttpHandler) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, tas
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -347,7 +347,7 @@ func (h HttpHandler) ReopenTask(w http.ResponseWriter, r *http.Request, taskId s
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -369,7 +369,7 @@ func (h HttpHandler) DeleteTask(w http.ResponseWriter, r *http.Request, taskId s
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -391,7 +391,7 @@ func (h HttpHandler) ArchiveTask(w http.ResponseWriter, r *http.Request, taskId 
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -426,7 +426,7 @@ func (h HttpHandler) SetTaskPriority(w http.ResponseWriter, r *http.Request, tas
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -455,7 +455,7 @@ func (h HttpHandler) SetTaskDueDate(w http.ResponseWriter, r *http.Request, task
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -489,7 +489,7 @@ func (h HttpHandler) SetTaskDescription(w http.ResponseWriter, r *http.Request, 
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -511,7 +511,7 @@ func (h HttpHandler) AddTaskTag(w http.ResponseWriter, r *http.Request, taskId s
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 
@@ -526,7 +526,7 @@ func (h HttpHandler) RemoveTaskTag(w http.ResponseWriter, r *http.Request, taskI
 	})
 
 	if err != nil {
-		ResponseError(r.Context(), errors.E(op, err), w, r)
+		responseError(r.Context(), errors.E(op, err), w, r)
 		return
 	}
 

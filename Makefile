@@ -1,13 +1,16 @@
 include .env
 export
 
-.PHONY: gen_openapi
+.PHONY: gen_openapi component-test
 openapi:
 	oapi-codegen -generate types -o "ports/openapi_types.gen.go" -package "ports" "ports/openapi.yml"
 	oapi-codegen -generate chi-server -o "ports/openapi_api.gen.go" -package "ports" "ports/openapi.yml"
 
 test:
 	go test ./...
+
+component-test:
+	go test ./tests/...
 
 start:
 	go run cmd/start/main.go

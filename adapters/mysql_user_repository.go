@@ -98,7 +98,7 @@ func (r MysqlUserRepository) UpdateByID(ctx context.Context, uuid string, update
 			password_hash = :password_hash
 		WHERE id = :id;
 	`
-	result, err := r.db.NamedExecContext(ctx, query, updated)
+	result, err := tx.NamedExecContext(ctx, query, updated)
 	if err != nil {
 		return errors.E(op, err)
 	}

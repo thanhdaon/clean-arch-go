@@ -74,6 +74,7 @@ func SetupComponentTest(t *testing.T) *TestFixtures {
 
 	waitForHTTPServer(t)
 
+	createAdminUser(t, db)
 	token := generateTestToken(t)
 
 	return &TestFixtures{
@@ -107,11 +108,35 @@ func waitForHTTPServer(t *testing.T) {
 func generateTestToken(t *testing.T) string {
 	t.Helper()
 
-	a := auth.NewAuth("secret-key-for-development")
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		secret = "secret-key-for-development"
+	}
+
+	a := auth.NewAuth(secret)
 	token, err := a.CreateIDToken(map[string]any{
 		"user_uuid": "test-admin-uuid",
 		"user_role": "admin",
 	})
 	require.NoError(t, err)
 	return token
+}
+
+func createAdminUser(t *testing.T, db *sqlx.DB) string {
+	t.Helper()
+
+	email := "test-admin@example.com"
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM users WHERE email = ?", email)
+	require.NoError(t, err)
+
+	if count == 0 {
+		_, err = db.Exec(`
+			INSERT INTO users (id, role, name, email, password_hash)
+			VALUES ('test-admin-uuid', 'admin', 'Test Admin', 'test-admin@example.com', 'hashed-password')
+		`)
+		require.NoError(t, err)
+	}
+
+	return "test-admin-uuid"
 }

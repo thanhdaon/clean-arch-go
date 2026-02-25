@@ -56,8 +56,25 @@ func testListUsers(t *testing.T, f *TestFixtures) {
 	require.NoError(t, err)
 
 	users, ok := result["users"]
-	assert.True(t, ok, "response should contain 'users' key; got: %s", string(body))
-	assert.NotNil(t, users)
+	require.True(t, ok, "response should contain 'users' key; got: %s", string(body))
+	require.NotNil(t, users)
+
+	// Assert the user we just created appears in the list
+	userList, ok := users.([]any)
+	require.True(t, ok, "users should be a JSON array; got: %T", users)
+
+	found := false
+	for _, u := range userList {
+		userMap, ok := u.(map[string]any)
+		if !ok {
+			continue
+		}
+		if userMap["email"] == email {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "created user with email %q should appear in list response", email)
 }
 
 func testGetUser(t *testing.T, f *TestFixtures) {

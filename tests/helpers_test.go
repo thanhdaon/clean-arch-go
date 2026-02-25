@@ -489,3 +489,66 @@ func createTaskAndGetID(t *testing.T, db *sqlx.DB, token, creatorID string) stri
 	require.NoError(t, err)
 	return taskID
 }
+
+func getTaskField[T any](t *testing.T, db *sqlx.DB, taskID, field string) T {
+	t.Helper()
+	var result T
+	err := db.Get(&result, fmt.Sprintf("SELECT %s FROM tasks WHERE id = ?", field), taskID)
+	require.NoError(t, err)
+	return result
+}
+
+func getTaskIDByTitle(t *testing.T, db *sqlx.DB, title string) string {
+	t.Helper()
+	var taskID string
+	err := db.Get(&taskID, "SELECT id FROM tasks WHERE title = ? AND deleted_at IS NULL", title)
+	require.NoError(t, err, "task should be stored in DB")
+	return taskID
+}
+
+func getTaskTagIDByName(t *testing.T, db *sqlx.DB, taskID, name string) string {
+	t.Helper()
+	var tagID string
+	err := db.Get(&tagID, "SELECT id FROM task_tags WHERE task_id = ? AND name = ?", taskID, name)
+	require.NoError(t, err)
+	return tagID
+}
+
+func countTableWhere(t *testing.T, db *sqlx.DB, table, whereClause string, args ...any) int {
+	t.Helper()
+	var count int
+	query := fmt.Sprintf("SELECT COUNT(*) FROM %s WHERE %s", table, whereClause)
+	err := db.Get(&count, query, args...)
+	require.NoError(t, err)
+	return count
+}
+
+func assertTaskFieldEquals[T comparable](t *testing.T, db *sqlx.DB, taskID, field string, expected T) {
+	t.Helper()
+	actual := getTaskField[T](t, db, taskID, field)
+	require.Equal(t, expected, actual, "%s should match", field)
+}
+
+func assertTaskFieldEmpty[T comparable](t *testing.T, db *sqlx.DB, taskID, field string) {
+	t.Helper()
+	var zero T
+	actual := getTaskField[T](t, db, taskID, field)
+	require.Equal(t, zero, actual, "%s should be empty", field)
+}
+
+func assertTaskArchived(t *testing.T, db *sqlx.DB, taskID string) {
+	t.Helper()
+	count := countTableWhere(t, db, "tasks", "id = ? AND archived_at IS NOT NULL", taskID)
+	require.Equal(t, 1, count, "task %s should be archived in DB", taskID)
+}
+
+func assertTaskHasDueDate(t *testing.T, db *sqlx.DB, taskID string) {
+	t.Helper()
+	count := countTableWhere(t, db, "tasks", "id = ? AND due_date IS NOT NULL", taskID)
+	require.Equal(t, 1, count, "task due_date should be set in DB")
+}
+
+func assertTaskTagCount(t *testing.T, db *sqlx.DB, whereClause string, args ...any) int {
+	t.Helper()
+	return countTableWhere(t, db, "task_tags", whereClause, args...)
+}

@@ -20,9 +20,7 @@ func testCreateTask(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var taskID string
-	err := f.DB.Get(&taskID, "SELECT id FROM tasks WHERE title = ? AND deleted_at IS NULL", title)
-	require.NoError(t, err, "task should be stored in DB")
+	taskID := getTaskIDByTitle(t, f.DB, title)
 	assert.NotEmpty(t, taskID)
 }
 
@@ -75,10 +73,7 @@ func testUpdateTaskTitle(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var storedTitle string
-	err := f.DB.Get(&storedTitle, "SELECT title FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, newTitle, storedTitle)
+	assertTaskFieldEquals(t, f.DB, taskID, "title", newTitle)
 }
 
 func testChangeTaskStatus(t *testing.T, f *TestFixtures) {
@@ -92,10 +87,7 @@ func testChangeTaskStatus(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var status string
-	err := f.DB.Get(&status, "SELECT status FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, "in_progress", status)
+	assertTaskFieldEquals(t, f.DB, taskID, "status", "in_progress")
 }
 
 func testSetTaskPriority(t *testing.T, f *TestFixtures) {
@@ -109,9 +101,7 @@ func testSetTaskPriority(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var priority int
-	err := f.DB.Get(&priority, "SELECT priority FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
+	priority := getTaskField[int](t, f.DB, taskID, "priority")
 	assert.Greater(t, priority, 0, "priority should be set to a non-zero value")
 }
 
@@ -126,10 +116,7 @@ func testSetTaskDueDate(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var count int
-	err := f.DB.Get(&count, "SELECT COUNT(*) FROM tasks WHERE id = ? AND due_date IS NOT NULL", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count, "task due_date should be set in DB")
+	assertTaskHasDueDate(t, f.DB, taskID)
 }
 
 func testSetTaskDescription(t *testing.T, f *TestFixtures) {
@@ -143,10 +130,7 @@ func testSetTaskDescription(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var description string
-	err := f.DB.Get(&description, "SELECT description FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, "This is a test description", description)
+	assertTaskFieldEquals(t, f.DB, taskID, "description", "This is a test description")
 }
 
 func testAddTaskTag(t *testing.T, f *TestFixtures) {
@@ -160,9 +144,7 @@ func testAddTaskTag(t *testing.T, f *TestFixtures) {
 	})
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var count int
-	err := f.DB.Get(&count, "SELECT COUNT(*) FROM task_tags WHERE task_id = ? AND name = ?", taskID, "bug")
-	require.NoError(t, err)
+	count := assertTaskTagCount(t, f.DB, "task_id = ? AND name = ?", taskID, "bug")
 	assert.Equal(t, 1, count, "tag 'bug' should exist for task %s", taskID)
 }
 
@@ -177,16 +159,12 @@ func testRemoveTaskTag(t *testing.T, f *TestFixtures) {
 	})
 	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed adding tag: %s", string(body))
 
-	var tagID string
-	err := f.DB.Get(&tagID, "SELECT id FROM task_tags WHERE task_id = ? AND name = ?", taskID, "to-remove")
-	require.NoError(t, err)
+	tagID := getTaskTagIDByName(t, f.DB, taskID, "to-remove")
 
 	resp, body = removeTaskTag(t, f.AuthToken, taskID, tagID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var count int
-	err = f.DB.Get(&count, "SELECT COUNT(*) FROM task_tags WHERE id = ?", tagID)
-	require.NoError(t, err)
+	count := assertTaskTagCount(t, f.DB, "id = ?", tagID)
 	assert.Equal(t, 0, count, "tag %s should be removed from DB", tagID)
 }
 
@@ -200,10 +178,7 @@ func testAssignTask(t *testing.T, f *TestFixtures) {
 	resp, body := assignTask(t, f.AuthToken, taskID, assigneeID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var assignedTo string
-	err := f.DB.Get(&assignedTo, "SELECT assigned_to FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, assigneeID, assignedTo)
+	assertTaskFieldEquals(t, f.DB, taskID, "assigned_to", assigneeID)
 }
 
 func testUnassignTask(t *testing.T, f *TestFixtures) {
@@ -219,10 +194,7 @@ func testUnassignTask(t *testing.T, f *TestFixtures) {
 	resp, body = unassignTask(t, f.AuthToken, taskID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var assignedTo string
-	err := f.DB.Get(&assignedTo, "SELECT assigned_to FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
-	assert.Empty(t, assignedTo, "task should have no assignee after unassign")
+	assertTaskFieldEmpty[string](t, f.DB, taskID, "assigned_to")
 }
 
 func testReopenTask(t *testing.T, f *TestFixtures) {
@@ -239,9 +211,7 @@ func testReopenTask(t *testing.T, f *TestFixtures) {
 	resp, body = reopenTask(t, f.AuthToken, taskID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var status string
-	err := f.DB.Get(&status, "SELECT status FROM tasks WHERE id = ?", taskID)
-	require.NoError(t, err)
+	status := getTaskField[string](t, f.DB, taskID, "status")
 	assert.NotEqual(t, "done", status, "task should not be in 'done' status after reopen")
 }
 
@@ -254,10 +224,7 @@ func testArchiveTask(t *testing.T, f *TestFixtures) {
 	resp, body := archiveTask(t, f.AuthToken, taskID)
 	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	var count int
-	err := f.DB.Get(&count, "SELECT COUNT(*) FROM tasks WHERE id = ? AND archived_at IS NOT NULL", taskID)
-	require.NoError(t, err)
-	assert.Equal(t, 1, count, "task %s should be archived in DB", taskID)
+	assertTaskArchived(t, f.DB, taskID)
 }
 
 func testDeleteTask(t *testing.T, f *TestFixtures) {

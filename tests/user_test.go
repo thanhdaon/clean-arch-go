@@ -16,6 +16,8 @@ func testAddUser(t *testing.T, f *TestFixtures) {
 
 	email := fmt.Sprintf("test-%d@example.com", time.Now().UnixNano())
 
+	before := f.VideoService.CallCountSnapshot()
+
 	resp, body := postUser(t, map[string]any{
 		"role":     "employer",
 		"name":     "Test User",
@@ -30,7 +32,8 @@ func testAddUser(t *testing.T, f *TestFixtures) {
 	require.NoError(t, err, "user should be stored in DB")
 	assert.NotEmpty(t, userID)
 
-	assert.GreaterOrEqual(t, f.VideoService.CallCount(), 1)
+	after := f.VideoService.CallCount()
+	assert.Equal(t, 1, after-before, "adding a user should trigger exactly one VideoService call")
 }
 
 func testListUsers(t *testing.T, f *TestFixtures) {

@@ -184,12 +184,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/LoginResponse"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
   /tasks:
     get:
       tags:

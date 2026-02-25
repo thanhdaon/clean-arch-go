@@ -36,10 +36,6 @@ func ResponseError(ctx context.Context, err error, w http.ResponseWriter, r *htt
 	})
 }
 
-func internalError(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
-	ResponseError(ctx, errors.E(errkind.Internal, err), w, r)
-}
-
 func unauthorised(ctx context.Context, err error, w http.ResponseWriter, r *http.Request) {
 	ResponseError(ctx, err, w, r)
 }

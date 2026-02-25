@@ -580,42 +580,63 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 400
+            message: "Invalid request: missing required field 'title'"
     Unauthorized:
       description: Missing or invalid authentication
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 401
+            message: "Authentication required: missing or invalid token"
     Forbidden:
       description: Authenticated but lacks permission
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 403
+            message: "Access denied: insufficient permissions"
     NotFound:
       description: Resource not found
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 404
+            message: "Resource not found: user with ID '123e4567-e89b-12d3-a456-426614174000' does not exist"
     Conflict:
       description: Resource already exists
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 409
+            message: "Resource already exists: user with email 'john@example.com' already registered"
     InternalError:
       description: Unexpected server error
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 500
+            message: "Internal server error: an unexpected error occurred while processing your request"
     ServiceUnavailable:
       description: Service temporarily unavailable
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Error"
+          example:
+            code: 503
+            message: "Service unavailable: the service is temporarily down for maintenance"
   schemas:
     Error:
       type: object

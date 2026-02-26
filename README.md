@@ -1,25 +1,39 @@
 ## Domain
 
-Build a Task Management API with role-based access, enabling two types of users: Employer and Employee.
+Build a Task Management API with role-based access, enabling three types of users: Admin, Employer, and Employee.
 
-1. Employee Role:
+### User Roles
 
-- View Assigned Tasks: An Employee can only view the tasks assigned to them.
-- Task Status Update: An Employee can update the status of their tasks (e.g., "In Progress," "Completed").
+1. **Admin**:
+   - Manage all users (create, view, update profile, delete)
+   - Change user roles
+   - Full task management permissions (including delete any task)
 
-2. Employer Role:
+2. **Employer**:
+   - Create tasks
+   - Assign/unassign tasks to employees
+   - View all tasks
+   - Delete own tasks
+   - Archive tasks
+   - Update task details (title, priority, due date, description)
 
-- Create and Assign Tasks: An Employer can create tasks and assign them to specific employees.
-- View All Tasks with Filtering and Sorting:
-  - Filter tasks by:
-    - Assignee: View tasks assigned to a specific employee.
-    - Status: View tasks based on status (e.g., "Pending," "In Progress," "Completed").
-  - Sort tasks by:
-    - Date: Sort tasks by creation date or due date.
-    - Status: Sort tasks by task status to see active or completed tasks first.
-- View Employee Task Summary: An Employer can view a list of all employees, each showing:
-  - Total number of tasks assigned.
-  - Number of tasks completed by each employee.
+3. **Employee**:
+   - View only tasks assigned to them
+   - Update status of assigned tasks
+   - Update title, priority, due date, description of assigned tasks
+   - Reopen completed tasks
+
+### Task Properties
+
+- **Status**: Todo, Pending, In Progress, Completed (with valid state transitions)
+- **Priority**: Low, Medium, High, Urgent
+- **Due Date**: Optional deadline
+- **Description**: Optional detailed description
+- **Tags**: Multiple tags per task
+
+### Authentication
+
+- Email/password login with JWT token
 
 ## Environtment
 

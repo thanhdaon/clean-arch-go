@@ -552,3 +552,99 @@ func assertTaskTagCount(t *testing.T, db *sqlx.DB, whereClause string, args ...a
 	t.Helper()
 	return countTableWhere(t, db, "task_tags", whereClause, args...)
 }
+
+func addComment(t *testing.T, token, taskID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPost, fmt.Sprintf("%s/api/tasks/%s/comments", baseURL(), taskID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func updateComment(t *testing.T, token, taskID, commentID string, body map[string]any) (*http.Response, []byte) {
+	t.Helper()
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	req, err := http.NewRequest(http.MethodPatch, fmt.Sprintf("%s/api/tasks/%s/comments/%s", baseURL(), taskID, commentID), bytes.NewBuffer(payload))
+	require.NoError(t, err)
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func deleteComment(t *testing.T, token, taskID, commentID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodDelete, fmt.Sprintf("%s/api/tasks/%s/comments/%s", baseURL(), taskID, commentID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func getTaskActivity(t *testing.T, token, taskID string) (*http.Response, []byte) {
+	t.Helper()
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/api/tasks/%s/activity", baseURL(), taskID), nil)
+	require.NoError(t, err)
+	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := http.DefaultClient.Do(req)
+	require.NoError(t, err)
+
+	respBody, err := io.ReadAll(resp.Body)
+	require.NoError(t, err)
+	resp.Body.Close()
+
+	return resp, respBody
+}
+
+func getCommentIDByContent(t *testing.T, db *sqlx.DB, taskID, content string) string {
+	t.Helper()
+	var id string
+	err := db.Get(&id, "SELECT id FROM comments WHERE task_id = ? AND content = ? AND deleted_at IS NULL", taskID, content)
+	require.NoError(t, err, "comment with content %q should exist for task %s", content, taskID)
+	return id
+}
+
+func assertCommentExistsInDB(t *testing.T, db *sqlx.DB, commentID string) {
+	t.Helper()
+	count := countTableWhere(t, db, "comments", "id = ? AND deleted_at IS NULL", commentID)
+	require.Equal(t, 1, count, "comment %s should exist in DB", commentID)
+}
+
+func assertCommentDeletedInDB(t *testing.T, db *sqlx.DB, commentID string) {
+	t.Helper()
+	count := countTableWhere(t, db, "comments", "id = ? AND deleted_at IS NOT NULL", commentID)
+	require.Equal(t, 1, count, "comment %s should be soft-deleted in DB", commentID)
+}

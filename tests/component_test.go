@@ -91,4 +91,20 @@ func TestComponent(t *testing.T) {
 	t.Run("delete_task", func(t *testing.T) {
 		testDeleteTask(t, fixtures)
 	})
+
+	t.Run("add_comment", func(t *testing.T) {
+		testAddComment(t, fixtures)
+	})
+
+	t.Run("update_comment", func(t *testing.T) {
+		testUpdateComment(t, fixtures)
+	})
+
+	t.Run("delete_comment", func(t *testing.T) {
+		testDeleteComment(t, fixtures)
+	})
+
+	t.Run("get_task_activity", func(t *testing.T) {
+		testGetTaskActivity(t, fixtures)
+	})
 }

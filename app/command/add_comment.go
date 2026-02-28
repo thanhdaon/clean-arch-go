@@ -46,11 +46,15 @@ func (h addCommentHandler) Handle(ctx context.Context, cmd AddComment) error {
 		return errors.E(op, err)
 	}
 
-	a, err := activity.New(cmd.TaskID, cmd.AuthorID, activity.TypeCommentAdded,
-		map[string]any{"comment_id": c.UUID()})
+	payload := map[string]any{"comment_id": c.UUID()}
+	a, err := activity.New(cmd.TaskID, cmd.AuthorID, activity.TypeCommentAdded, payload)
 	if err != nil {
 		return errors.E(op, err)
 	}
 
-	return errors.E(op, h.activities.Add(ctx, a))
+	if err := h.activities.Add(ctx, a); err != nil {
+		return errors.E(op, err)
+	}
+
+	return nil
 }

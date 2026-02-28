@@ -72,5 +72,8 @@ func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
 		return errors.E(op, err)
 	}
 
-	return errors.E(op, h.activities.Add(ctx, a))
+	if err := h.activities.Add(ctx, a); err != nil {
+		return errors.E(op, err)
+	}
+	return nil
 }

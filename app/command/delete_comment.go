@@ -37,17 +37,23 @@ func NewDeleteCommentHandler(comments CommentRepository, activities ActivityRepo
 func (h deleteCommentHandler) Handle(ctx context.Context, cmd DeleteComment) error {
 	op := errors.Op("cmd.DeleteComment")
 
-	if err := h.comments.UpdateByID(ctx, cmd.CommentID, func(ctx context.Context, c comment.Comment) (comment.Comment, error) {
+	updateFn := func(ctx context.Context, c comment.Comment) (comment.Comment, error) {
 		return c, c.Delete(cmd.DeleterID)
-	}); err != nil {
+	}
+
+	if err := h.comments.UpdateByID(ctx, cmd.CommentID, updateFn); err != nil {
 		return errors.E(op, err)
 	}
 
-	a, err := activity.New(cmd.TaskID, cmd.DeleterID, activity.TypeCommentDeleted,
-		map[string]any{"comment_id": cmd.CommentID})
+	payload := map[string]any{"comment_id": cmd.CommentID}
+	a, err := activity.New(cmd.TaskID, cmd.DeleterID, activity.TypeCommentDeleted, payload)
 	if err != nil {
 		return errors.E(op, err)
 	}
 
-	return errors.E(op, h.activities.Add(ctx, a))
+	if err := h.activities.Add(ctx, a); err != nil {
+		return errors.E(op, err)
+	}
+
+	return nil
 }

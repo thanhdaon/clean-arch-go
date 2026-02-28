@@ -56,5 +56,8 @@ func (h setTaskDueDateHandler) Handle(ctx context.Context, cmd SetTaskDueDate) e
 		return errors.E(op, err)
 	}
 
-	return errors.E(op, h.activities.Add(ctx, a))
+	if err := h.activities.Add(ctx, a); err != nil {
+		return errors.E(op, err)
+	}
+	return nil
 }

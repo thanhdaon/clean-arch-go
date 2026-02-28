@@ -15,6 +15,9 @@ component-test:
 integration-test:
 	go test ./adapters/...
 
+unit-test:
+	go test ./domain/...
+
 start:
 	go run cmd/start/main.go
 

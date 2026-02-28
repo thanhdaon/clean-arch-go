@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
@@ -23,23 +24,24 @@ type AssignTaskHandler decorator.CommandHandler[AssignTask]
 type assignTaskHandler struct {
 	taskRepository TaskRepository
 	userRepository UserRepository
+	activities     ActivityRepository
 }
 
-func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepository, logger *logrus.Entry) AssignTaskHandler {
+func NewAssignTaskHandler(taskRepository TaskRepository, userRepository UserRepository, activities ActivityRepository, logger *logrus.Entry) AssignTaskHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-
 	if userRepository == nil {
 		log.Fatalln("nil userRepository")
 	}
-
-	handler := assignTaskHandler{
+	if activities == nil {
+		log.Fatalln("nil activities")
+	}
+	return decorator.ApplyCommandDecorators(assignTaskHandler{
 		taskRepository: taskRepository,
 		userRepository: userRepository,
-	}
-
-	return decorator.ApplyCommandDecorators(handler, logger)
+		activities:     activities,
+	}, logger)
 }
 
 func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
@@ -50,7 +52,6 @@ func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
 		if errors.Is(errkind.NotExist, err) {
 			return errors.E(op, errkind.NotExist, err)
 		}
-
 		return errors.E(op, err)
 	}
 
@@ -58,7 +59,6 @@ func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
 		if err := t.AssignTo(cmd.Assigner, assignee); err != nil {
 			return nil, errors.E(errors.Op("cmd.AssignTask.updateFn"), err)
 		}
-
 		return t, nil
 	}
 
@@ -66,5 +66,11 @@ func (h assignTaskHandler) Handle(ctx context.Context, cmd AssignTask) error {
 		return errors.E(op, err)
 	}
 
-	return nil
+	a, err := activity.New(cmd.TaskId, cmd.Assigner.UUID(), activity.TypeAssigned,
+		map[string]any{"assignee_id": cmd.AssigneeId})
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

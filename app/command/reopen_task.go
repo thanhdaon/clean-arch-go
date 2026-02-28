@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -19,19 +20,18 @@ type ReopenTask struct {
 type ReopenTaskHandler decorator.CommandHandler[ReopenTask]
 
 type reopenTaskHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewReopenTaskHandler(taskRepository TaskRepository, logger *logrus.Entry) ReopenTaskHandler {
+func NewReopenTaskHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) ReopenTaskHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-
-	handler := reopenTaskHandler{
-		tasks: taskRepository,
+	if activities == nil {
+		log.Fatalln("nil activities")
 	}
-
-	return decorator.ApplyCommandDecorators(handler, logger)
+	return decorator.ApplyCommandDecorators(reopenTaskHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h reopenTaskHandler) Handle(ctx context.Context, cmd ReopenTask) error {
@@ -48,5 +48,10 @@ func (h reopenTaskHandler) Handle(ctx context.Context, cmd ReopenTask) error {
 		return errors.E(op, err)
 	}
 
-	return nil
+	a, err := activity.New(cmd.TaskId, cmd.Caller.UUID(), activity.TypeReopened, nil)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

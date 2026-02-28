@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -19,19 +20,18 @@ type ArchiveTask struct {
 type ArchiveTaskHandler decorator.CommandHandler[ArchiveTask]
 
 type archiveTaskHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewArchiveTaskHandler(taskRepository TaskRepository, logger *logrus.Entry) ArchiveTaskHandler {
+func NewArchiveTaskHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) ArchiveTaskHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-
-	handler := archiveTaskHandler{
-		tasks: taskRepository,
+	if activities == nil {
+		log.Fatalln("nil activities")
 	}
-
-	return decorator.ApplyCommandDecorators(handler, logger)
+	return decorator.ApplyCommandDecorators(archiveTaskHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h archiveTaskHandler) Handle(ctx context.Context, cmd ArchiveTask) error {
@@ -48,5 +48,10 @@ func (h archiveTaskHandler) Handle(ctx context.Context, cmd ArchiveTask) error {
 		return errors.E(op, err)
 	}
 
-	return nil
+	a, err := activity.New(cmd.TaskId, cmd.Caller.UUID(), activity.TypeArchived, nil)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

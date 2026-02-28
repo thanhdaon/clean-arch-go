@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -19,19 +20,18 @@ type UnassignTask struct {
 type UnassignTaskHandler decorator.CommandHandler[UnassignTask]
 
 type unassignTaskHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewUnassignTaskHandler(taskRepository TaskRepository, logger *logrus.Entry) UnassignTaskHandler {
+func NewUnassignTaskHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) UnassignTaskHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-
-	handler := unassignTaskHandler{
-		tasks: taskRepository,
+	if activities == nil {
+		log.Fatalln("nil activities")
 	}
-
-	return decorator.ApplyCommandDecorators(handler, logger)
+	return decorator.ApplyCommandDecorators(unassignTaskHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h unassignTaskHandler) Handle(ctx context.Context, cmd UnassignTask) error {
@@ -48,5 +48,10 @@ func (h unassignTaskHandler) Handle(ctx context.Context, cmd UnassignTask) error
 		return errors.E(op, err)
 	}
 
-	return nil
+	a, err := activity.New(cmd.TaskId, cmd.Caller.UUID(), activity.TypeUnassigned, nil)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

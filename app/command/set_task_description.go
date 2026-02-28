@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -20,15 +21,18 @@ type SetTaskDescription struct {
 type SetTaskDescriptionHandler decorator.CommandHandler[SetTaskDescription]
 
 type setTaskDescriptionHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewSetTaskDescriptionHandler(taskRepository TaskRepository, logger *logrus.Entry) SetTaskDescriptionHandler {
+func NewSetTaskDescriptionHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) SetTaskDescriptionHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-	handler := setTaskDescriptionHandler{tasks: taskRepository}
-	return decorator.ApplyCommandDecorators(handler, logger)
+	if activities == nil {
+		log.Fatalln("nil activities")
+	}
+	return decorator.ApplyCommandDecorators(setTaskDescriptionHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h setTaskDescriptionHandler) Handle(ctx context.Context, cmd SetTaskDescription) error {
@@ -44,5 +48,11 @@ func (h setTaskDescriptionHandler) Handle(ctx context.Context, cmd SetTaskDescri
 	if err := h.tasks.UpdateByID(ctx, cmd.TaskId, updateFn); err != nil {
 		return errors.E(op, err)
 	}
-	return nil
+
+	a, err := activity.New(cmd.TaskId, cmd.Updater.UUID(), activity.TypeDescriptionSet, nil)
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

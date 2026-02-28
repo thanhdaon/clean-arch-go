@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -21,15 +22,18 @@ type SetTaskDueDate struct {
 type SetTaskDueDateHandler decorator.CommandHandler[SetTaskDueDate]
 
 type setTaskDueDateHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewSetTaskDueDateHandler(taskRepository TaskRepository, logger *logrus.Entry) SetTaskDueDateHandler {
+func NewSetTaskDueDateHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) SetTaskDueDateHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-	handler := setTaskDueDateHandler{tasks: taskRepository}
-	return decorator.ApplyCommandDecorators(handler, logger)
+	if activities == nil {
+		log.Fatalln("nil activities")
+	}
+	return decorator.ApplyCommandDecorators(setTaskDueDateHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h setTaskDueDateHandler) Handle(ctx context.Context, cmd SetTaskDueDate) error {
@@ -45,5 +49,12 @@ func (h setTaskDueDateHandler) Handle(ctx context.Context, cmd SetTaskDueDate) e
 	if err := h.tasks.UpdateByID(ctx, cmd.TaskId, updateFn); err != nil {
 		return errors.E(op, err)
 	}
-	return nil
+
+	a, err := activity.New(cmd.TaskId, cmd.Updater.UUID(), activity.TypeDueDateSet,
+		map[string]any{"due_date": cmd.DueDate})
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

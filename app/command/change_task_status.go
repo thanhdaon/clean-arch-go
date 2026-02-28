@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -20,19 +21,18 @@ type ChangeTaskStatus struct {
 type ChangeTaskStatusHandler decorator.CommandHandler[ChangeTaskStatus]
 
 type changeTaskStatusHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewChangeTaskStatusHandler(taskRepository TaskRepository, logger *logrus.Entry) ChangeTaskStatusHandler {
+func NewChangeTaskStatusHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) ChangeTaskStatusHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-
-	handler := changeTaskStatusHandler{
-		tasks: taskRepository,
+	if activities == nil {
+		log.Fatalln("nil activities")
 	}
-
-	return decorator.ApplyCommandDecorators(handler, logger)
+	return decorator.ApplyCommandDecorators(changeTaskStatusHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h changeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatus) error {
@@ -54,5 +54,11 @@ func (h changeTaskStatusHandler) Handle(ctx context.Context, cmd ChangeTaskStatu
 		return errors.E(op, err)
 	}
 
-	return nil
+	a, err := activity.New(cmd.TaskId, cmd.Changer.UUID(), activity.TypeStatusChanged,
+		map[string]any{"status": cmd.Status})
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

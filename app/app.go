@@ -28,11 +28,15 @@ type Commands struct {
 	SetTaskDescription command.SetTaskDescriptionHandler
 	AddTaskTag         command.AddTaskTagHandler
 	RemoveTaskTag      command.RemoveTaskTagHandler
+	AddComment         command.AddCommentHandler
+	UpdateComment      command.UpdateCommentHandler
+	DeleteComment      command.DeleteCommentHandler
 }
 
 type Queries struct {
-	Tasks query.TasksHandler
-	User  query.UserHandler
-	Users query.UsersHandler
-	Login query.LoginHandler
+	Tasks          query.TasksHandler
+	User           query.UserHandler
+	Users          query.UsersHandler
+	Login          query.LoginHandler
+	TaskActivities query.TaskActivitiesHandler
 }

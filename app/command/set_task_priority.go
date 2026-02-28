@@ -3,6 +3,7 @@ package command
 import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/activity"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -20,15 +21,18 @@ type SetTaskPriority struct {
 type SetTaskPriorityHandler decorator.CommandHandler[SetTaskPriority]
 
 type setTaskPriorityHandler struct {
-	tasks TaskRepository
+	tasks      TaskRepository
+	activities ActivityRepository
 }
 
-func NewSetTaskPriorityHandler(taskRepository TaskRepository, logger *logrus.Entry) SetTaskPriorityHandler {
+func NewSetTaskPriorityHandler(taskRepository TaskRepository, activities ActivityRepository, logger *logrus.Entry) SetTaskPriorityHandler {
 	if taskRepository == nil {
 		log.Fatalln("nil taskRepository")
 	}
-	handler := setTaskPriorityHandler{tasks: taskRepository}
-	return decorator.ApplyCommandDecorators(handler, logger)
+	if activities == nil {
+		log.Fatalln("nil activities")
+	}
+	return decorator.ApplyCommandDecorators(setTaskPriorityHandler{tasks: taskRepository, activities: activities}, logger)
 }
 
 func (h setTaskPriorityHandler) Handle(ctx context.Context, cmd SetTaskPriority) error {
@@ -44,5 +48,12 @@ func (h setTaskPriorityHandler) Handle(ctx context.Context, cmd SetTaskPriority)
 	if err := h.tasks.UpdateByID(ctx, cmd.TaskId, updateFn); err != nil {
 		return errors.E(op, err)
 	}
-	return nil
+
+	a, err := activity.New(cmd.TaskId, cmd.Updater.UUID(), activity.TypePriorityChanged,
+		map[string]any{"priority": int(cmd.Priority)})
+	if err != nil {
+		return errors.E(op, err)
+	}
+
+	return errors.E(op, h.activities.Add(ctx, a))
 }

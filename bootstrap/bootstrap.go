@@ -89,6 +89,8 @@ func newApplication(db *sqlx.DB, videoSvc command.VideoService, logger *logrus.E
 	id := adapters.NewID()
 	taskRepository := adapters.NewMysqlTaskRepository(db)
 	userRepository := adapters.NewMysqlUserRepository(db)
+	commentRepository := adapters.NewMysqlCommentRepository(db)
+	activityRepository := adapters.NewMysqlActivityRepository(db)
 	authService := auth.NewAuth("secret-key-for-development")
 
 	application := app.Application{
@@ -98,24 +100,28 @@ func newApplication(db *sqlx.DB, videoSvc command.VideoService, logger *logrus.E
 			DeleteUser:         command.NewDeleteUserHandler(userRepository, logger),
 			UpdateUserProfile:  command.NewUpdateUserProfileHandler(userRepository, logger),
 			CreateTask:         command.NewCreateTaskHandler(id, taskRepository, logger),
-			ChangeTaskStatus:   command.NewChangeTaskStatusHandler(taskRepository, logger),
-			AssignTask:         command.NewAssignTaskHandler(taskRepository, userRepository, logger),
-			UpdateTaskTitle:    command.NewUpdateTaskTitleHandler(taskRepository, logger),
-			UnassignTask:       command.NewUnassignTaskHandler(taskRepository, logger),
-			ReopenTask:         command.NewReopenTaskHandler(taskRepository, logger),
-			DeleteTask:         command.NewDeleteTaskHandler(taskRepository, logger),
-			ArchiveTask:        command.NewArchiveTaskHandler(taskRepository, logger),
-			SetTaskPriority:    command.NewSetTaskPriorityHandler(taskRepository, logger),
-			SetTaskDueDate:     command.NewSetTaskDueDateHandler(taskRepository, logger),
-			SetTaskDescription: command.NewSetTaskDescriptionHandler(taskRepository, logger),
+			ChangeTaskStatus:   command.NewChangeTaskStatusHandler(taskRepository, activityRepository, logger),
+			AssignTask:         command.NewAssignTaskHandler(taskRepository, userRepository, activityRepository, logger),
+			UpdateTaskTitle:    command.NewUpdateTaskTitleHandler(taskRepository, activityRepository, logger),
+			UnassignTask:       command.NewUnassignTaskHandler(taskRepository, activityRepository, logger),
+			ReopenTask:         command.NewReopenTaskHandler(taskRepository, activityRepository, logger),
+			DeleteTask:         command.NewDeleteTaskHandler(taskRepository, activityRepository, logger),
+			ArchiveTask:        command.NewArchiveTaskHandler(taskRepository, activityRepository, logger),
+			SetTaskPriority:    command.NewSetTaskPriorityHandler(taskRepository, activityRepository, logger),
+			SetTaskDueDate:     command.NewSetTaskDueDateHandler(taskRepository, activityRepository, logger),
+			SetTaskDescription: command.NewSetTaskDescriptionHandler(taskRepository, activityRepository, logger),
 			AddTaskTag:         command.NewAddTaskTagHandler(taskRepository, logger),
 			RemoveTaskTag:      command.NewRemoveTaskTagHandler(taskRepository, logger),
+			AddComment:         command.NewAddCommentHandler(commentRepository, activityRepository, logger),
+			UpdateComment:      command.NewUpdateCommentHandler(commentRepository, activityRepository, logger),
+			DeleteComment:      command.NewDeleteCommentHandler(commentRepository, activityRepository, logger),
 		},
 		Queries: app.Queries{
-			Tasks: query.NewTaskHandler(taskRepository, logger),
-			User:  query.NewUserHandler(userRepository, logger),
-			Users: query.NewUsersHandler(userRepository, logger),
-			Login: query.NewLoginHandler(userRepository, authService, logger),
+			Tasks:          query.NewTaskHandler(taskRepository, logger),
+			User:           query.NewUserHandler(userRepository, logger),
+			Users:          query.NewUsersHandler(userRepository, logger),
+			Login:          query.NewLoginHandler(userRepository, authService, logger),
+			TaskActivities: query.NewTaskActivitiesHandler(activityRepository, logger),
 		},
 	}
 

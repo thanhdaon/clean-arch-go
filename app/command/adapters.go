@@ -1,6 +1,8 @@
 package command
 
 import (
+	"clean-arch-go/domain/activity"
+	"clean-arch-go/domain/comment"
 	"clean-arch-go/domain/tag"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
@@ -42,4 +44,15 @@ type AuthService interface {
 
 type VideoService interface {
 	GetAll(context.Context) error
+}
+
+type CommentUpdater func(context.Context, comment.Comment) (comment.Comment, error)
+
+type CommentRepository interface {
+	Add(ctx context.Context, c comment.Comment) error
+	UpdateByID(ctx context.Context, uuid string, updateFn CommentUpdater) error
+}
+
+type ActivityRepository interface {
+	Add(ctx context.Context, a activity.Activity) error
 }

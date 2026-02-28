@@ -9,6 +9,22 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for ActivityType.
+const (
+	Archived        ActivityType = "archived"
+	Assigned        ActivityType = "assigned"
+	CommentAdded    ActivityType = "comment_added"
+	CommentDeleted  ActivityType = "comment_deleted"
+	CommentUpdated  ActivityType = "comment_updated"
+	DescriptionSet  ActivityType = "description_set"
+	DueDateSet      ActivityType = "due_date_set"
+	PriorityChanged ActivityType = "priority_changed"
+	Reopened        ActivityType = "reopened"
+	StatusChanged   ActivityType = "status_changed"
+	TitleUpdated    ActivityType = "title_updated"
+	Unassigned      ActivityType = "unassigned"
+)
+
 // Defines values for PostUserRole.
 const (
 	PostUserRoleAdmin    PostUserRole = "admin"
@@ -53,6 +69,20 @@ const (
 	Employer UserRole = "employer"
 )
 
+// Activity defines model for Activity.
+type Activity struct {
+	ActorId   *openapi_types.UUID     `json:"actorId,omitempty"`
+	ActorName *string                 `json:"actorName,omitempty"`
+	CreatedAt *time.Time              `json:"createdAt,omitempty"`
+	Id        *openapi_types.UUID     `json:"id,omitempty"`
+	Payload   *map[string]interface{} `json:"payload,omitempty"`
+	TaskId    *openapi_types.UUID     `json:"taskId,omitempty"`
+	Type      *ActivityType           `json:"type,omitempty"`
+}
+
+// ActivityType defines model for Activity.Type.
+type ActivityType string
+
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -74,6 +104,11 @@ type LoginResponse struct {
 	User  *User   `json:"user,omitempty"`
 }
 
+// PatchComment defines model for PatchComment.
+type PatchComment struct {
+	Content string `json:"content"`
+}
+
 // PatchTaskDescription defines model for PatchTaskDescription.
 type PatchTaskDescription struct {
 	Description *string `json:"description,omitempty"`
@@ -88,6 +123,11 @@ type PatchTaskTitle struct {
 type PatchUser struct {
 	Email *openapi_types.Email `json:"email,omitempty"`
 	Name  *string              `json:"name,omitempty"`
+}
+
+// PostComment defines model for PostComment.
+type PostComment struct {
+	Content string `json:"content"`
 }
 
 // PostTask defines model for PostTask.
@@ -190,6 +230,12 @@ type ServiceUnavailable = Error
 // Unauthorized defines model for Unauthorized.
 type Unauthorized = Error
 
+// GetTaskActivityParams defines parameters for GetTaskActivity.
+type GetTaskActivityParams struct {
+	Limit  *int `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
@@ -198,6 +244,12 @@ type CreateTaskJSONRequestBody = PostTask
 
 // UpdateTaskTitleJSONRequestBody defines body for UpdateTaskTitle for application/json ContentType.
 type UpdateTaskTitleJSONRequestBody = PatchTaskTitle
+
+// AddCommentJSONRequestBody defines body for AddComment for application/json ContentType.
+type AddCommentJSONRequestBody = PostComment
+
+// UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
+type UpdateCommentJSONRequestBody = PatchComment
 
 // SetTaskDescriptionJSONRequestBody defines body for SetTaskDescription for application/json ContentType.
 type SetTaskDescriptionJSONRequestBody = PatchTaskDescription

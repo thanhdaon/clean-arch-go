@@ -572,6 +572,138 @@ paths:
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
 
+  /tasks/{taskId}/comments:
+    post:
+      tags:
+        - Tasks
+      operationId: addComment
+      summary: Add a comment to a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostComment"
+      responses:
+        "201":
+          description: Comment added
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /tasks/{taskId}/comments/{commentId}:
+    patch:
+      tags:
+        - Tasks
+      operationId: updateComment
+      summary: Update a comment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchComment"
+      responses:
+        "200":
+          description: Comment updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    delete:
+      tags:
+        - Tasks
+      operationId: deleteComment
+      summary: Delete a comment
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: commentId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Comment deleted
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /tasks/{taskId}/activity:
+    get:
+      tags:
+        - Tasks
+      operationId: getTaskActivity
+      summary: Get activity log for a task
+      parameters:
+        - name: taskId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        "200":
+          description: Activity log retrieved
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Activity"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
 components:
   responses:
     BadRequest:
@@ -825,3 +957,51 @@ components:
           type: string
           format: uuid
           example: "123e4567-e89b-12d3-a456-426614174000"
+    PostComment:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          example: "Hey @[user:uuid-123] see @[task:uuid-456]"
+    PatchComment:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          example: "Updated comment text"
+    Activity:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        taskId:
+          type: string
+          format: uuid
+        actorId:
+          type: string
+          format: uuid
+        actorName:
+          type: string
+        type:
+          type: string
+          enum:
+            - status_changed
+            - assigned
+            - unassigned
+            - title_updated
+            - priority_changed
+            - due_date_set
+            - description_set
+            - archived
+            - reopened
+            - comment_added
+            - comment_updated
+            - comment_deleted
+        payload:
+          type: object
+        createdAt:
+          type: string
+          format: date-time

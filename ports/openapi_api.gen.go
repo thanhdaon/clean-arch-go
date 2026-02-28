@@ -28,6 +28,9 @@ type ServerInterface interface {
 	// Update task title
 	// (PATCH /tasks/{taskId})
 	UpdateTaskTitle(w http.ResponseWriter, r *http.Request, taskId string)
+	// Get activity log for a task
+	// (GET /tasks/{taskId}/activity)
+	GetTaskActivity(w http.ResponseWriter, r *http.Request, taskId string, params GetTaskActivityParams)
 	// Archive a task
 	// (PUT /tasks/{taskId}/archive)
 	ArchiveTask(w http.ResponseWriter, r *http.Request, taskId string)
@@ -37,6 +40,15 @@ type ServerInterface interface {
 	// Assign task to a user
 	// (PUT /tasks/{taskId}/assign/{assigneeId})
 	AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string)
+	// Add a comment to a task
+	// (POST /tasks/{taskId}/comments)
+	AddComment(w http.ResponseWriter, r *http.Request, taskId string)
+	// Delete a comment
+	// (DELETE /tasks/{taskId}/comments/{commentId})
+	DeleteComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string)
+	// Update a comment
+	// (PATCH /tasks/{taskId}/comments/{commentId})
+	UpdateComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string)
 	// Update task description
 	// (PATCH /tasks/{taskId}/description)
 	SetTaskDescription(w http.ResponseWriter, r *http.Request, taskId string)
@@ -112,6 +124,12 @@ func (_ Unimplemented) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, t
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
+// Get activity log for a task
+// (GET /tasks/{taskId}/activity)
+func (_ Unimplemented) GetTaskActivity(w http.ResponseWriter, r *http.Request, taskId string, params GetTaskActivityParams) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
 // Archive a task
 // (PUT /tasks/{taskId}/archive)
 func (_ Unimplemented) ArchiveTask(w http.ResponseWriter, r *http.Request, taskId string) {
@@ -127,6 +145,24 @@ func (_ Unimplemented) UnassignTask(w http.ResponseWriter, r *http.Request, task
 // Assign task to a user
 // (PUT /tasks/{taskId}/assign/{assigneeId})
 func (_ Unimplemented) AssignTask(w http.ResponseWriter, r *http.Request, taskId string, assigneeId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Add a comment to a task
+// (POST /tasks/{taskId}/comments)
+func (_ Unimplemented) AddComment(w http.ResponseWriter, r *http.Request, taskId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Delete a comment
+// (DELETE /tasks/{taskId}/comments/{commentId})
+func (_ Unimplemented) DeleteComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// Update a comment
+// (PATCH /tasks/{taskId}/comments/{commentId})
+func (_ Unimplemented) UpdateComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -309,6 +345,50 @@ func (siw *ServerInterfaceWrapper) UpdateTaskTitle(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetTaskActivity operation middleware
+func (siw *ServerInterfaceWrapper) GetTaskActivity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTaskActivityParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTaskActivity(w, r, taskId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ArchiveTask operation middleware
 func (siw *ServerInterfaceWrapper) ArchiveTask(w http.ResponseWriter, r *http.Request) {
 
@@ -384,6 +464,99 @@ func (siw *ServerInterfaceWrapper) AssignTask(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AssignTask(w, r, taskId, assigneeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AddComment operation middleware
+func (siw *ServerInterfaceWrapper) AddComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AddComment(w, r, taskId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteComment operation middleware
+func (siw *ServerInterfaceWrapper) DeleteComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteComment(w, r, taskId, commentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateComment operation middleware
+func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+
+	// ------------- Path parameter "taskId" -------------
+	var taskId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "taskId", chi.URLParam(r, "taskId"), &taskId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "taskId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "commentId" -------------
+	var commentId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "commentId", chi.URLParam(r, "commentId"), &commentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "commentId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateComment(w, r, taskId, commentId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -834,6 +1007,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Patch(options.BaseURL+"/tasks/{taskId}", wrapper.UpdateTaskTitle)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/tasks/{taskId}/activity", wrapper.GetTaskActivity)
+	})
+	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/tasks/{taskId}/archive", wrapper.ArchiveTask)
 	})
 	r.Group(func(r chi.Router) {
@@ -841,6 +1017,15 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/tasks/{taskId}/assign/{assigneeId}", wrapper.AssignTask)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/tasks/{taskId}/comments", wrapper.AddComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/tasks/{taskId}/comments/{commentId}", wrapper.DeleteComment)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/tasks/{taskId}/comments/{commentId}", wrapper.UpdateComment)
 	})
 	r.Group(func(r chi.Router) {
 		r.Patch(options.BaseURL+"/tasks/{taskId}/description", wrapper.SetTaskDescription)

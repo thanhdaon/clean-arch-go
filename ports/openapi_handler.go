@@ -545,3 +545,108 @@ func (h HttpHandler) RemoveTaskTag(w http.ResponseWriter, r *http.Request, taskI
 
 	responseSuccess(r.Context(), w, r)
 }
+
+func (h HttpHandler) AddComment(w http.ResponseWriter, r *http.Request, taskId string) {
+	op := errors.Op("http.AddComment")
+
+	caller, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PostComment{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	if err := h.app.Commands.AddComment.Handle(r.Context(), command.AddComment{
+		TaskID:   taskId,
+		AuthorID: caller.UUID(),
+		Content:  body.Content,
+	}); err != nil {
+		responseError(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h HttpHandler) UpdateComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string) {
+	op := errors.Op("http.UpdateComment")
+
+	caller, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	body := PatchComment{}
+	if err := render.Decode(r, &body); err != nil {
+		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	if err := h.app.Commands.UpdateComment.Handle(r.Context(), command.UpdateComment{
+		CommentID: commentId,
+		EditorID:  caller.UUID(),
+		Content:   body.Content,
+	}); err != nil {
+		responseError(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) DeleteComment(w http.ResponseWriter, r *http.Request, taskId string, commentId string) {
+	op := errors.Op("http.DeleteComment")
+
+	caller, err := userFromCtx(r.Context())
+	if err != nil {
+		unauthorised(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	if err := h.app.Commands.DeleteComment.Handle(r.Context(), command.DeleteComment{
+		CommentID: commentId,
+		DeleterID: caller.UUID(),
+		TaskID:    taskId,
+	}); err != nil {
+		responseError(r.Context(), errors.E(op, err), w, r)
+		return
+	}
+
+	responseSuccess(r.Context(), w, r)
+}
+
+func (h HttpHandler) GetTaskActivity(w http.ResponseWriter, r *http.Request, taskId string, params GetTaskActivityParams) {
+	op := errors.Op("http.GetTaskActivity")
+	ctx := r.Context()
+
+	limit := 20
+	offset := 0
+	if params.Limit != nil {
+		limit = *params.Limit
+	}
+	if params.Offset != nil {
+		offset = *params.Offset
+	}
+
+	activities, err := h.app.Queries.TaskActivities.Handle(ctx, query.TaskActivities{
+		TaskID: taskId,
+		Limit:  limit,
+		Offset: offset,
+	})
+	if err != nil {
+		responseError(ctx, errors.E(op, err), w, r)
+		return
+	}
+
+	render.Respond(w, r, map[string]any{
+		"status":     http.StatusOK,
+		"activities": activities,
+		"trace_id":   trace.SpanContextFromContext(ctx).TraceID(),
+	})
+}

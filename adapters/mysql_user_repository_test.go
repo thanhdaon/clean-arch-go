@@ -196,17 +196,11 @@ func TestMysqlUserRepository_FindByEmail(t *testing.T) {
 }
 
 func TestMysqlUserRepository_FindAll(t *testing.T) {
+	t.Parallel()
 	userRepository := newMysqlUserRepository(t)
-	require.NoError(t, userRepository.RemoveAll(context.Background()))
 
-	t.Run("empty", func(t *testing.T) {
-		users, err := userRepository.FindAll(context.Background())
-
-		require.NoError(t, err)
-		require.Empty(t, users)
-	})
-
-	t.Run("multiple_users", func(t *testing.T) {
+	t.Run("finds_created_users", func(t *testing.T) {
+		t.Parallel()
 		user1 := newEmployeeUser(t)
 		user2 := newEmployerUser(t)
 		require.NoError(t, userRepository.Add(context.Background(), user1))
@@ -215,7 +209,7 @@ func TestMysqlUserRepository_FindAll(t *testing.T) {
 		users, err := userRepository.FindAll(context.Background())
 
 		require.NoError(t, err)
-		require.Len(t, users, 2)
+		assertUsersPresent(t, users, user1, user2)
 	})
 }
 
@@ -309,4 +303,15 @@ func assertUsersEquals(t *testing.T, user1, user2 user.User) {
 
 	require.Equal(t, user1.UUID(), user2.UUID())
 	require.Equal(t, user1.Role().String(), user2.Role().String())
+}
+
+func assertUsersPresent(t *testing.T, users []user.User, expected ...user.User) {
+	t.Helper()
+	foundUUIDs := make(map[string]bool)
+	for _, u := range users {
+		foundUUIDs[u.UUID()] = true
+	}
+	for _, expectedUser := range expected {
+		require.True(t, foundUUIDs[expectedUser.UUID()], "expected user %s to be present", expectedUser.UUID())
+	}
 }

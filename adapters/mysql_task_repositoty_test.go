@@ -123,6 +123,44 @@ func TestMysqlTaskRepository_FindById_DeletedTask(t *testing.T) {
 	assertErrorIsNotExist(t, err)
 }
 
+func TestMysqlTaskRepository_FindById_ArchivedTask(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	archivedTask := newArchivedTask(t, creator)
+	err := taskRepository.Add(context.Background(), archivedTask)
+	require.NoError(t, err)
+
+	_, err = taskRepository.FindById(context.Background(), archivedTask.UUID())
+	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlTaskRepository_UpdateByID_NotFound(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+
+	err := taskRepository.UpdateByID(context.Background(), "non-existent-uuid", func(ctx context.Context, found task.Task) (task.Task, error) {
+		return found, nil
+	})
+	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlTaskRepository_UpdateByID_DeletedTask(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	deletedTask := newDeletedTask(t, creator)
+	err := taskRepository.Add(context.Background(), deletedTask)
+	require.NoError(t, err)
+
+	err = taskRepository.UpdateByID(context.Background(), deletedTask.UUID(), func(ctx context.Context, found task.Task) (task.Task, error) {
+		return found, nil
+	})
+	assertErrorIsNotExist(t, err)
+}
+
 func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

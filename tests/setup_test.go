@@ -50,6 +50,7 @@ type TestFixtures struct {
 	VideoService *VideoServiceStub
 	Cancel       context.CancelFunc
 	AuthToken    string
+	AdminID      string
 }
 
 func SetupComponentTest(t *testing.T) *TestFixtures {
@@ -74,7 +75,7 @@ func SetupComponentTest(t *testing.T) *TestFixtures {
 
 	waitForHTTPServer(t)
 
-	createAdminUser(t, db)
+	adminID := createAdminUser(t, db)
 	token := generateTestToken(t)
 
 	return &TestFixtures{
@@ -82,6 +83,7 @@ func SetupComponentTest(t *testing.T) *TestFixtures {
 		VideoService: videoStub,
 		Cancel:       cancel,
 		AuthToken:    token,
+		AdminID:      adminID,
 	}
 }
 

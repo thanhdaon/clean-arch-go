@@ -3,10 +3,6 @@
 ;===============================================================
 
 ;===============================================================
-; POST /api/auth/login - Login scenarios
-;===============================================================
-
-;===============================================================
 ; Login with valid credentials returns JWT token
 ;===============================================================
 GIVEN a user exists with role employer.
@@ -15,7 +11,7 @@ GIVEN the user has email "test@example.com" and password "password123".
 WHEN the user logs in with email "test@example.com" and password "password123".
 
 THEN no error is returned.
-and the response contains a JWT token.
+and a JWT token is available.
 
 ;===============================================================
 ; Login with invalid password returns 401 error
@@ -62,10 +58,6 @@ GIVEN no preconditions.
 WHEN the user logs in with empty email and empty password.
 
 THEN a bad request error is returned.
-
-;===============================================================
-; POST /api/users - User creation scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin creates user with role admin
@@ -143,10 +135,6 @@ WHEN the admin creates a user with password "123".
 THEN a bad request error is returned.
 
 ;===============================================================
-; GET /api/users - List users scenarios
-;===============================================================
-
-;===============================================================
 ; Admin lists all users
 ;===============================================================
 GIVEN an admin user is authenticated.
@@ -155,7 +143,7 @@ GIVEN multiple users exist in the database.
 WHEN the admin requests the user list.
 
 THEN no error is returned.
-and the response contains all users.
+and all users are available.
 
 ;===============================================================
 ; Non-admin lists users returns forbidden
@@ -175,11 +163,7 @@ GIVEN no users exist except the admin.
 WHEN the admin requests the user list.
 
 THEN no error is returned.
-and the response contains an empty list.
-
-;===============================================================
-; GET /api/users/{id} - Get user scenarios
-;===============================================================
+and an empty list is available.
 
 ;===============================================================
 ; Admin gets any user by ID
@@ -190,7 +174,7 @@ GIVEN a user exists with ID "user-123".
 WHEN the admin requests user "user-123".
 
 THEN no error is returned.
-and the response contains the user details.
+and the user details are available.
 
 ;===============================================================
 ; User gets own profile
@@ -200,7 +184,7 @@ GIVEN a user is authenticated with ID "user-123".
 WHEN the user requests their own profile "user-123".
 
 THEN no error is returned.
-and the response contains the user details.
+and the user details are available.
 
 ;===============================================================
 ; User gets another user's profile returns forbidden
@@ -211,10 +195,6 @@ GIVEN another user exists with ID "user-456".
 WHEN the user requests profile "user-456".
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; PATCH /api/users/{id} - Update profile scenarios
-;===============================================================
 
 ;===============================================================
 ; User updates own profile
@@ -257,10 +237,6 @@ WHEN the user updates their profile with name "".
 THEN a bad request error is returned.
 
 ;===============================================================
-; DELETE /api/users/{id} - Delete user scenarios
-;===============================================================
-
-;===============================================================
 ; Admin deletes another user
 ;===============================================================
 GIVEN an admin user is authenticated.
@@ -290,10 +266,6 @@ GIVEN another user exists with ID "user-456".
 WHEN the employer deletes user "user-456".
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; PUT /api/users/{id}/role - Role management scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin changes user role to employer

@@ -3,10 +3,6 @@
 ;===============================================================
 
 ;===============================================================
-; GET /api/tasks/{taskId}/activity - Activity log access scenarios
-;===============================================================
-
-;===============================================================
 ; Admin gets activity log
 ;===============================================================
 GIVEN a task exists with status todo.
@@ -15,7 +11,7 @@ GIVEN an admin user is authenticated.
 WHEN the admin requests the activity log for the task.
 
 THEN no error is returned.
-and the response contains the activity log.
+and the activity log is available.
 
 ;===============================================================
 ; Employer gets activity log
@@ -26,7 +22,7 @@ GIVEN an employer user is authenticated.
 WHEN the employer requests the activity log for the task.
 
 THEN no error is returned.
-and the response contains the activity log.
+and the activity log is available.
 
 ;===============================================================
 ; Employee gets activity of assigned task
@@ -38,7 +34,7 @@ GIVEN the task is assigned to the user.
 WHEN the assigned user requests the activity log for the task.
 
 THEN no error is returned.
-and the response contains the activity log.
+and the activity log is available.
 
 ;===============================================================
 ; Employee gets activity of unassigned task returns forbidden
@@ -50,10 +46,6 @@ GIVEN the task is not assigned to the employee.
 WHEN the employee requests the activity log for the task.
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; Activity entries created for mutations
-;===============================================================
 
 ;===============================================================
 ; Status change creates status_changed activity

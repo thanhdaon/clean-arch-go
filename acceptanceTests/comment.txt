@@ -3,10 +3,6 @@
 ;===============================================================
 
 ;===============================================================
-; POST /api/tasks/{taskId}/comments - Add comment scenarios
-;===============================================================
-
-;===============================================================
 ; Admin adds comment
 ;===============================================================
 GIVEN a task exists with status todo.
@@ -72,10 +68,6 @@ WHEN the admin adds a comment "This is a comment" to task "nonexistent-123".
 THEN a not found error is returned.
 
 ;===============================================================
-; PATCH /api/tasks/{taskId}/comments/{id} - Update comment scenarios
-;===============================================================
-
-;===============================================================
 ; Author updates own comment
 ;===============================================================
 GIVEN a task exists with status todo.
@@ -131,10 +123,6 @@ GIVEN a comment ID "comment-123" is provided.
 WHEN the admin updates comment "comment-123" on task "nonexistent-123".
 
 THEN a not found error is returned.
-
-;===============================================================
-; DELETE /api/tasks/{taskId}/comments/{id} - Delete comment scenarios
-;===============================================================
 
 ;===============================================================
 ; Author deletes own comment

@@ -3,10 +3,6 @@
 ;===============================================================
 
 ;===============================================================
-; POST /api/tasks - Task creation scenarios
-;===============================================================
-
-;===============================================================
 ; Admin creates task
 ;===============================================================
 GIVEN an admin user is authenticated.
@@ -63,10 +59,6 @@ WHEN the admin creates a task with a 500-character title.
 THEN no error is returned.
 
 ;===============================================================
-; GET /api/tasks - List tasks scenarios
-;===============================================================
-
-;===============================================================
 ; Admin lists all tasks
 ;===============================================================
 GIVEN an admin user is authenticated.
@@ -75,7 +67,7 @@ GIVEN multiple tasks exist in the database.
 WHEN the admin requests the task list.
 
 THEN no error is returned.
-and the response contains all tasks.
+and all tasks are available.
 
 ;===============================================================
 ; Employer lists tasks
@@ -86,7 +78,7 @@ GIVEN multiple tasks exist in the database.
 WHEN the employer requests the task list.
 
 THEN no error is returned.
-and the response contains all tasks.
+and all tasks are available.
 
 ;===============================================================
 ; Employee lists only assigned tasks
@@ -99,7 +91,7 @@ GIVEN another task exists without assignment.
 WHEN the employee requests the task list.
 
 THEN no error is returned.
-and the response contains only the assigned task.
+and only the assigned task is available.
 
 ;===============================================================
 ; Employee with no assignments gets empty list
@@ -110,7 +102,7 @@ GIVEN tasks exist but none are assigned to the employee.
 WHEN the employee requests the task list.
 
 THEN no error is returned.
-and the response contains an empty list.
+and an empty list is available.
 
 ;===============================================================
 ; List tasks with pagination
@@ -121,7 +113,7 @@ GIVEN 50 tasks exist in the database.
 WHEN the admin requests the task list with limit 10 and offset 20.
 
 THEN no error is returned.
-and the response contains 10 tasks.
+and 10 tasks are available.
 and the tasks are from offset 20.
 
 ;===============================================================
@@ -134,7 +126,7 @@ GIVEN the task is archived.
 WHEN the admin requests the task list including archived.
 
 THEN no error is returned.
-and the response contains the archived task.
+and the archived task is available.
 
 ;===============================================================
 ; List tasks filtered by status
@@ -146,7 +138,7 @@ GIVEN a task exists with status "in_progress".
 WHEN the admin requests the task list filtered by status "todo".
 
 THEN no error is returned.
-and the response contains only tasks with status "todo".
+and only tasks with status "todo" are available.
 
 ;===============================================================
 ; List tasks sorted by due date
@@ -158,10 +150,6 @@ WHEN the admin requests the task list sorted by due date ascending.
 
 THEN no error is returned.
 and the tasks are ordered by due date ascending.
-
-;===============================================================
-; PUT /api/tasks/{id}/status - Status change scenarios
-;===============================================================
 
 ;===============================================================
 ; Valid transition: todo to in_progress
@@ -289,10 +277,6 @@ WHEN the admin changes task "nonexistent-123" status to "in_progress".
 THEN a not found error is returned.
 
 ;===============================================================
-; PATCH /api/tasks/{id} - Title update scenarios
-;===============================================================
-
-;===============================================================
 ; Admin updates title
 ;===============================================================
 GIVEN a task exists with title "Old Title".
@@ -357,10 +341,6 @@ WHEN the admin updates task "nonexistent-123" title to "New Title".
 THEN a not found error is returned.
 
 ;===============================================================
-; PUT /api/tasks/{id}/priority - Priority scenarios
-;===============================================================
-
-;===============================================================
 ; Admin sets priority
 ;===============================================================
 GIVEN a task exists with priority "medium".
@@ -409,10 +389,6 @@ GIVEN no task exists with ID "nonexistent-123".
 WHEN the admin sets task "nonexistent-123" priority to "high".
 
 THEN a not found error is returned.
-
-;===============================================================
-; PATCH /api/tasks/{id}/description - Description scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin updates description
@@ -469,10 +445,6 @@ WHEN the admin updates task "nonexistent-123" description to "New description".
 THEN a not found error is returned.
 
 ;===============================================================
-; PUT /api/tasks/{id}/due-date - Due date scenarios
-;===============================================================
-
-;===============================================================
 ; Admin sets due date
 ;===============================================================
 GIVEN a task exists without a due date.
@@ -502,10 +474,6 @@ GIVEN a task exists without a due date.
 WHEN the employee sets the task due date to "2027-03-01T10:00:00Z".
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; PUT /api/tasks/{id}/assign/{userId} - Assignment scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin assigns task to employer
@@ -564,10 +532,6 @@ WHEN the admin assigns the task to user "nonexistent-123".
 THEN a not found error is returned.
 
 ;===============================================================
-; DELETE /api/tasks/{id}/assign - Unassignment scenarios
-;===============================================================
-
-;===============================================================
 ; Admin unassigns task
 ;===============================================================
 GIVEN a task exists with status todo.
@@ -600,10 +564,6 @@ GIVEN the task is assigned to a user.
 WHEN the employee unassigns the task.
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; PUT /api/tasks/{id}/archive - Archive scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin archives task
@@ -647,10 +607,6 @@ WHEN the admin archives the task again.
 THEN no error is returned.
 
 ;===============================================================
-; PUT /api/tasks/{id}/reopen - Reopen scenarios
-;===============================================================
-
-;===============================================================
 ; Admin reopens archived task
 ;===============================================================
 GIVEN a task exists with status todo.
@@ -683,10 +639,6 @@ GIVEN the task is archived.
 WHEN the employee reopens the task.
 
 THEN a forbidden error is returned.
-
-;===============================================================
-; DELETE /api/tasks/{id} - Delete scenarios
-;===============================================================
 
 ;===============================================================
 ; Admin deletes task

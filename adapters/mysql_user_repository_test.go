@@ -43,28 +43,40 @@ func TestMysqlUserRepository_Add(t *testing.T) {
 	require.NotNil(t, userRepository)
 }
 
-func TestMysqlUserRepository_Update(t *testing.T) {
+func TestMysqlUserRepository_UpdateByID(t *testing.T) {
 	t.Parallel()
-
 	userRepository := newMysqlUserRepository(t)
-	expectedUser := newEmployerUser(t)
 
-	err := userRepository.Add(context.Background(), expectedUser)
-	require.NoError(t, err)
+	t.Run("update_role", func(t *testing.T) {
+		t.Parallel()
+		expectedUser := newEmployerUser(t)
 
-	var updatedUser user.User
+		err := userRepository.Add(context.Background(), expectedUser)
+		require.NoError(t, err)
 
-	err = userRepository.UpdateByID(context.TODO(), expectedUser.UUID(), func(ctx context.Context, found user.User) (user.User, error) {
-		assertUsersEquals(t, expectedUser, found)
+		var updatedUser user.User
 
-		found.ChangeRole(user.RoleEmployee)
+		err = userRepository.UpdateByID(context.TODO(), expectedUser.UUID(), func(ctx context.Context, found user.User) (user.User, error) {
+			assertUsersEquals(t, expectedUser, found)
+			found.ChangeRole(user.RoleEmployee)
+			updatedUser = found
+			return found, nil
+		})
+		require.NoError(t, err)
 
-		updatedUser = found
-		return found, nil
+		assertPersistedUserEquals(t, userRepository, updatedUser)
 	})
-	require.NoError(t, err)
 
-	assertPersistedUserEquals(t, userRepository, updatedUser)
+	t.Run("not_found", func(t *testing.T) {
+		t.Parallel()
+
+		err := userRepository.UpdateByID(context.Background(), "non-existent-uuid", func(ctx context.Context, found user.User) (user.User, error) {
+			return found, nil
+		})
+
+		require.Error(t, err)
+		require.True(t, errors.Is(errkind.NotExist, err))
+	})
 }
 
 func TestMysqlUserRepository_FindById(t *testing.T) {

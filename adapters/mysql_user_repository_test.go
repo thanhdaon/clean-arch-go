@@ -6,6 +6,7 @@ import (
 	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/user"
 	"context"
+	stderrors "errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -76,6 +77,21 @@ func TestMysqlUserRepository_UpdateByID(t *testing.T) {
 
 		require.Error(t, err)
 		require.True(t, errors.Is(errkind.NotExist, err))
+	})
+
+	t.Run("updateFn_error", func(t *testing.T) {
+		t.Parallel()
+		existingUser := newEmployeeUser(t)
+		require.NoError(t, userRepository.Add(context.Background(), existingUser))
+
+		expectedErr := stderrors.New("update failed")
+		err := userRepository.UpdateByID(context.Background(), existingUser.UUID(), func(ctx context.Context, found user.User) (user.User, error) {
+			return found, expectedErr
+		})
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "update failed")
+		assertPersistedUserEquals(t, userRepository, existingUser)
 	})
 }
 

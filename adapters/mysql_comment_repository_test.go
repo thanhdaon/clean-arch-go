@@ -70,6 +70,42 @@ func TestMysqlCommentRepository_UpdateByID_UpdateFnError(t *testing.T) {
 	require.Contains(t, err.Error(), expectedErr.Error())
 }
 
+func TestMysqlCommentRepository_UpdateByID_Delete(t *testing.T) {
+	t.Parallel()
+	db, err := adapters.NewMySQLConnection()
+	require.NoError(t, err)
+	repo := adapters.NewMysqlCommentRepository(db)
+	taskRepo := adapters.NewMysqlTaskRepository(db)
+	userRepo := adapters.NewMysqlUserRepository(db)
+
+	ctx := context.Background()
+	u, tk := seedUserAndTask(t, ctx, userRepo, taskRepo)
+
+	c, _ := comment.New(tk.UUID(), u.UUID(), "Content to delete")
+	require.NoError(t, repo.Add(ctx, c))
+
+	err = repo.UpdateByID(ctx, c.UUID(), func(ctx context.Context, existing comment.Comment) (comment.Comment, error) {
+		return existing, existing.Delete(u.UUID())
+	})
+	require.NoError(t, err)
+}
+
+func TestMysqlCommentRepository_References(t *testing.T) {
+	t.Parallel()
+	db, err := adapters.NewMySQLConnection()
+	require.NoError(t, err)
+	repo := adapters.NewMysqlCommentRepository(db)
+	taskRepo := adapters.NewMysqlTaskRepository(db)
+	userRepo := adapters.NewMysqlUserRepository(db)
+
+	ctx := context.Background()
+	u, tk := seedUserAndTask(t, ctx, userRepo, taskRepo)
+
+	c, _ := comment.New(tk.UUID(), u.UUID(), "Hello @[user:uuid-123] and @[task:task-456]")
+	require.NoError(t, repo.Add(ctx, c))
+	require.Len(t, c.References(), 2)
+}
+
 func seedUserAndTask(t *testing.T, ctx context.Context, userRepo adapters.MysqlUserRepository, taskRepo adapters.MysqlTaskRepository) (user.User, task.Task) {
 	t.Helper()
 	u, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Seed User", "seed@example.com")

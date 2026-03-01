@@ -102,6 +102,27 @@ func TestMysqlTaskRepository_Update(t *testing.T) {
 	assertPersistedTaskEquals(t, taskRepository, updatedTask)
 }
 
+func TestMysqlTaskRepository_FindById_NotFound(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+
+	_, err := taskRepository.FindById(context.Background(), "non-existent-uuid")
+	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlTaskRepository_FindById_DeletedTask(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	deletedTask := newDeletedTask(t, creator)
+	err := taskRepository.Add(context.Background(), deletedTask)
+	require.NoError(t, err)
+
+	_, err = taskRepository.FindById(context.Background(), deletedTask.UUID())
+	assertErrorIsNotExist(t, err)
+}
+
 func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

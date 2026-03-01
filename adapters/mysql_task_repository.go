@@ -49,6 +49,8 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 		AssignedTo:  t.AssignedTo(),
 		CreatedAt:   t.CreatedAt(),
 		UpdatedAt:   timeToNullTime(t.UpdatedAt()),
+		DeletedAt:   timeToNullTime(t.DeletedAt()),
+		ArchivedAt:  timeToNullTime(t.ArchivedAt()),
 		Priority:    int(t.Priority()),
 		DueDate:     timeToNullTime(t.DueDate()),
 		Description: stringToNullString(t.Description()),
@@ -56,9 +58,9 @@ func (r MysqlTaskRepository) Add(ctx context.Context, t task.Task) error {
 
 	query := `
 		INSERT INTO tasks
-			(id, title, status, created_by, assigned_to, created_at, updated_at, priority, due_date, description)
+			(id, title, status, created_by, assigned_to, created_at, updated_at, deleted_at, archived_at, priority, due_date, description)
 		VALUES
-			(:id, :title, :status, :created_by, :assigned_to, :created_at, :updated_at, :priority, :due_date, :description)
+			(:id, :title, :status, :created_by, :assigned_to, :created_at, :updated_at, :deleted_at, :archived_at, :priority, :due_date, :description)
 	`
 
 	if _, err := r.db.NamedExecContext(ctx, query, added); err != nil {

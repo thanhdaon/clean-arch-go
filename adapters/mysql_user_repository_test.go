@@ -252,19 +252,26 @@ func TestMysqlUserRepository_DeleteByID(t *testing.T) {
 }
 
 func TestMysqlUserRepository_RemoveAll(t *testing.T) {
+	t.Parallel()
 	userRepository := newMysqlUserRepository(t)
 
 	user1 := newEmployeeUser(t)
-	user2 := newEmployerUser(t)
+	user1UUID := user1.UUID()
 	require.NoError(t, userRepository.Add(context.Background(), user1))
+
+	user2 := newEmployerUser(t)
+	user2UUID := user2.UUID()
 	require.NoError(t, userRepository.Add(context.Background(), user2))
 
 	err := userRepository.RemoveAll(context.Background())
 
 	require.NoError(t, err)
-	users, err := userRepository.FindAll(context.Background())
-	require.NoError(t, err)
-	require.Empty(t, users)
+
+	_, err = userRepository.FindById(context.Background(), user1UUID)
+	assertErrorIsNotExist(t, err)
+
+	_, err = userRepository.FindById(context.Background(), user2UUID)
+	assertErrorIsNotExist(t, err)
 }
 
 func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {

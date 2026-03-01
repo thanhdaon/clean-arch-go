@@ -5,6 +5,7 @@ import (
 	"clean-arch-go/app/query"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/errkind"
+	"clean-arch-go/domain/tag"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -264,6 +265,49 @@ func TestMysqlTaskRepository_RemoveAllTasks(t *testing.T) {
 	allTasks, err := taskRepository.AllTasks(context.Background())
 	require.NoError(t, err)
 	require.Empty(t, allTasks)
+}
+
+func TestMysqlTaskRepository_AddTag(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	existingTask := newExampleTask(t, creator)
+	err := taskRepository.Add(context.Background(), existingTask)
+	require.NoError(t, err)
+
+	newTag, err := tag.NewTag(existingTask.UUID(), "important")
+	require.NoError(t, err)
+
+	err = taskRepository.AddTag(context.Background(), newTag)
+	require.NoError(t, err)
+}
+
+func TestMysqlTaskRepository_RemoveTag_Success(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	existingTask := newExampleTask(t, creator)
+	err := taskRepository.Add(context.Background(), existingTask)
+	require.NoError(t, err)
+
+	newTag, err := tag.NewTag(existingTask.UUID(), "important")
+	require.NoError(t, err)
+
+	err = taskRepository.AddTag(context.Background(), newTag)
+	require.NoError(t, err)
+
+	err = taskRepository.RemoveTag(context.Background(), newTag.UUID())
+	require.NoError(t, err)
+}
+
+func TestMysqlTaskRepository_RemoveTag_NotFound(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+
+	err := taskRepository.RemoveTag(context.Background(), "non-existent-tag-id")
+	assertErrorIsNotExist(t, err)
 }
 
 func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {

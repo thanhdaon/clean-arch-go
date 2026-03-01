@@ -81,6 +81,22 @@ func TestMysqlTagRepository_FindByTaskId(t *testing.T) {
 	require.Len(t, tags, 2)
 }
 
+func TestMysqlTagRepository_Remove_NotFound(t *testing.T) {
+	t.Parallel()
+	tagRepo := newMysqlTagRepository(t)
+
+	err := tagRepo.Remove(context.Background(), "non-existent-uuid")
+	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlTagRepository_FindById_NotFound(t *testing.T) {
+	t.Parallel()
+	tagRepo := newMysqlTagRepository(t)
+
+	_, err := tagRepo.FindById(context.Background(), "non-existent-uuid")
+	assertErrorIsNotExist(t, err)
+}
+
 func newMysqlTagRepository(t *testing.T) adapters.MysqlTagRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

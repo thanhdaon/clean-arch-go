@@ -50,10 +50,8 @@ func TestMsqlTaskRepository_Add(t *testing.T) {
 }
 
 func TestMysqlTaskRepository_AllTasks(t *testing.T) {
+	t.Parallel()
 	taskRepository := newMysqlTaskRepository(t)
-
-	err := taskRepository.RemoveAllTasks(context.Background())
-	require.NoError(t, err)
 
 	creator := newExampleEmployer(t)
 
@@ -194,26 +192,13 @@ func TestMysqlTaskRepository_UpdateByID_UpdateFnError(t *testing.T) {
 	require.Contains(t, err.Error(), expectedErr.Error())
 }
 
-func TestMysqlTaskRepository_AllTasks_Empty(t *testing.T) {
-	taskRepository := newMysqlTaskRepository(t)
-
-	err := taskRepository.RemoveAllTasks(context.Background())
-	require.NoError(t, err)
-
-	allTasks, err := taskRepository.AllTasks(context.Background())
-	require.NoError(t, err)
-	require.Empty(t, allTasks)
-}
-
 func TestMysqlTaskRepository_AllTasks_ExcludesDeleted(t *testing.T) {
+	t.Parallel()
 	taskRepository := newMysqlTaskRepository(t)
 	creator := newExampleEmployer(t)
 
-	err := taskRepository.RemoveAllTasks(context.Background())
-	require.NoError(t, err)
-
 	activeTask := newExampleTask(t, creator)
-	err = taskRepository.Add(context.Background(), activeTask)
+	err := taskRepository.Add(context.Background(), activeTask)
 	require.NoError(t, err)
 
 	deletedTask := newDeletedTask(t, creator)
@@ -222,19 +207,18 @@ func TestMysqlTaskRepository_AllTasks_ExcludesDeleted(t *testing.T) {
 
 	allTasks, err := taskRepository.AllTasks(context.Background())
 	require.NoError(t, err)
-	require.Len(t, allTasks, 1)
-	require.Equal(t, activeTask.UUID(), allTasks[0].UUID)
+
+	assertTaskPresentInQuery(t, allTasks, activeTask)
+	assertTaskNotPresentInQuery(t, allTasks, deletedTask)
 }
 
 func TestMysqlTaskRepository_AllTasks_ExcludesArchived(t *testing.T) {
+	t.Parallel()
 	taskRepository := newMysqlTaskRepository(t)
 	creator := newExampleEmployer(t)
 
-	err := taskRepository.RemoveAllTasks(context.Background())
-	require.NoError(t, err)
-
 	activeTask := newExampleTask(t, creator)
-	err = taskRepository.Add(context.Background(), activeTask)
+	err := taskRepository.Add(context.Background(), activeTask)
 	require.NoError(t, err)
 
 	archivedTask := newArchivedTask(t, creator)
@@ -243,8 +227,9 @@ func TestMysqlTaskRepository_AllTasks_ExcludesArchived(t *testing.T) {
 
 	allTasks, err := taskRepository.AllTasks(context.Background())
 	require.NoError(t, err)
-	require.Len(t, allTasks, 1)
-	require.Equal(t, activeTask.UUID(), allTasks[0].UUID)
+
+	assertTaskPresentInQuery(t, allTasks, activeTask)
+	assertTaskNotPresentInQuery(t, allTasks, archivedTask)
 }
 
 func TestMysqlTaskRepository_RemoveAllTasks(t *testing.T) {
@@ -412,4 +397,23 @@ func assertErrorIsNotExist(t *testing.T, err error) {
 	t.Helper()
 	require.Error(t, err)
 	require.True(t, errors.Is(errkind.NotExist, err), "expected NotExist error, got: %v", err)
+}
+
+func assertTaskPresentInQuery(t *testing.T, allTasks []query.Task, target task.Task) {
+	t.Helper()
+	for _, qt := range allTasks {
+		if qt.UUID == target.UUID() {
+			return
+		}
+	}
+	t.Fatalf("task %s not found in query result", target.UUID())
+}
+
+func assertTaskNotPresentInQuery(t *testing.T, allTasks []query.Task, target task.Task) {
+	t.Helper()
+	for _, qt := range allTasks {
+		if qt.UUID == target.UUID() {
+			t.Fatalf("task %s should not be in query result", target.UUID())
+		}
+	}
 }

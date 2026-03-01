@@ -9,6 +9,7 @@ import (
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -233,7 +234,6 @@ func TestMysqlTaskRepository_AllTasks_ExcludesArchived(t *testing.T) {
 }
 
 func TestMysqlTaskRepository_RemoveAllTasks(t *testing.T) {
-	t.Parallel()
 	taskRepository := newMysqlTaskRepository(t)
 	creator := newExampleEmployer(t)
 
@@ -309,7 +309,8 @@ func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 
 func newExampleEmployer(t *testing.T) user.User {
 	t.Helper()
-	employer, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Test Employer", "employer@example.com")
+	email := fmt.Sprintf("employer-%s@example.com", adapters.NewID().New())
+	employer, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Test Employer", email)
 	require.NoError(t, err)
 	return employer
 }

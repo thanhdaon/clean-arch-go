@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -171,6 +172,46 @@ func assertUserDeletedInDB(t *testing.T, db *sqlx.DB, userID string) {
 	err := db.Get(&count, "SELECT COUNT(*) FROM users WHERE id = ? AND deleted_at IS NOT NULL", userID)
 	require.NoError(t, err)
 	require.Equal(t, 1, count, "user %s should be soft-deleted in DB", userID)
+}
+
+func getUserField[T any](t *testing.T, db *sqlx.DB, userID, field string) T {
+	t.Helper()
+	var result T
+	err := db.Get(&result, fmt.Sprintf("SELECT %s FROM users WHERE id = ?", field), userID)
+	require.NoError(t, err)
+	return result
+}
+
+func assertUserFieldEquals[T comparable](t *testing.T, db *sqlx.DB, userID, field string, expected T) {
+	t.Helper()
+	actual := getUserField[T](t, db, userID, field)
+	require.Equal(t, expected, actual, "%s should match", field)
+}
+
+func createUserWithRoleAndGetToken(t *testing.T, db *sqlx.DB, role string) (string, string) {
+	t.Helper()
+	email := fmt.Sprintf("%s-%d@example.com", role, time.Now().UnixNano())
+	resp, body := postUser(t, map[string]any{
+		"role":     role,
+		"name":     "Test " + role,
+		"email":    email,
+		"password": "password123",
+	})
+	require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))
+
+	var userID string
+	err := db.Get(&userID, "SELECT id FROM users WHERE email = ? AND deleted_at IS NULL", email)
+	require.NoError(t, err)
+
+	loginResp, loginBody := login(t, map[string]any{"email": email, "password": "password123"})
+	require.Equal(t, http.StatusOK, loginResp.StatusCode, "login failed: %s", string(loginBody))
+
+	var loginResult struct {
+		Token string `json:"token"`
+	}
+	require.NoError(t, json.Unmarshal(loginBody, &loginResult))
+
+	return userID, loginResult.Token
 }
 
 func createTask(t *testing.T, token string, body map[string]any) (*http.Response, []byte) {
@@ -647,4 +688,18 @@ func assertCommentDeletedInDB(t *testing.T, db *sqlx.DB, commentID string) {
 	t.Helper()
 	count := countTableWhere(t, db, "comments", "id = ? AND deleted_at IS NOT NULL", commentID)
 	require.Equal(t, 1, count, "comment %s should be soft-deleted in DB", commentID)
+}
+
+func getResponseStatus(body []byte) float64 {
+	var result struct {
+		Status float64 `json:"status"`
+	}
+	json.Unmarshal(body, &result)
+	return result.Status
+}
+
+func assertResponseStatus(t *testing.T, body []byte, expectedStatus int) {
+	t.Helper()
+	actual := int(getResponseStatus(body))
+	assert.Equal(t, expectedStatus, actual, "unexpected status in response body: %s", string(body))
 }

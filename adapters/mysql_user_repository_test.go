@@ -7,6 +7,7 @@ import (
 	"clean-arch-go/domain/user"
 	"context"
 	stderrors "errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -252,7 +253,6 @@ func TestMysqlUserRepository_DeleteByID(t *testing.T) {
 }
 
 func TestMysqlUserRepository_RemoveAll(t *testing.T) {
-	t.Parallel()
 	userRepository := newMysqlUserRepository(t)
 
 	user1 := newEmployeeUser(t)
@@ -283,14 +283,16 @@ func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {
 
 func newEmployeeUser(t *testing.T) user.User {
 	t.Helper()
-	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployee, "Employee Name", "employee@example.com")
+	email := fmt.Sprintf("employee-%s@example.com", adapters.NewID().New())
+	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployee, "Employee Name", email)
 	require.NoError(t, err)
 	return created
 }
 
 func newEmployerUser(t *testing.T) user.User {
 	t.Helper()
-	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Employer Name", "employer@example.com")
+	email := fmt.Sprintf("employer-%s@example.com", adapters.NewID().New())
+	created, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Employer Name", email)
 	require.NoError(t, err)
 	return created
 }

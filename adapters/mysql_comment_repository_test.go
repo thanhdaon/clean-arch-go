@@ -7,6 +7,7 @@ import (
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -108,7 +109,8 @@ func TestMysqlCommentRepository_References(t *testing.T) {
 
 func seedUserAndTask(t *testing.T, ctx context.Context, userRepo adapters.MysqlUserRepository, taskRepo adapters.MysqlTaskRepository) (user.User, task.Task) {
 	t.Helper()
-	u, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Seed User", "seed@example.com")
+	email := fmt.Sprintf("seed-%s@example.com", adapters.NewID().New())
+	u, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Seed User", email)
 	require.NoError(t, err)
 	require.NoError(t, userRepo.Add(ctx, u))
 

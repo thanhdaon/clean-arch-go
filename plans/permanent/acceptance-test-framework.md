@@ -147,6 +147,8 @@ require.NoError(t, f.DB.Get(&userID, "SELECT id FROM users WHERE email = ? AND d
 
 Use `createUserAndGetID(t, f.DB)` for quick setup when the user token is not needed.
 
+Use `createUserWithRoleAndGetToken(t, f.DB, "employer")` when you need both userID and token — returns `(userID, token string)`.
+
 ### Tasks
 
 ```
@@ -367,6 +369,13 @@ resp, body := putUserRole(t, f.AuthToken, userID, map[string]any{"role": "employ
 
 ### HTTP Status Assertions
 
+**Important:** This API returns HTTP 200 with the actual status code in the JSON response body:
+```json
+{"status":401,"error":"http.Login: authorization error: ...","trace_id":"..."}
+```
+
+Use `assertResponseStatus` to check error status codes from the response body, not `resp.StatusCode`.
+
 ```
 THEN no error is returned.
 THEN the request succeeds.
@@ -381,19 +390,23 @@ THEN an error is returned.
 ```
 
 ```go
-assert.GreaterOrEqual(t, resp.StatusCode, 400)
+assert.Equal(t, http.StatusOK, resp.StatusCode)
+assert.GreaterOrEqual(t, int(getResponseStatus(body)), 400)
 ```
 
 ```
 THEN a forbidden error is returned.
 THEN a not found error is returned.
 THEN a bad request error is returned.
+THEN an unauthorized error is returned.
 ```
 
 ```go
-assert.Equal(t, http.StatusForbidden, resp.StatusCode)
-assert.Equal(t, http.StatusNotFound, resp.StatusCode)
-assert.Equal(t, http.StatusBadRequest, resp.StatusCode)
+assert.Equal(t, http.StatusOK, resp.StatusCode)
+assertResponseStatus(t, body, http.StatusForbidden)
+assertResponseStatus(t, body, http.StatusNotFound)
+assertResponseStatus(t, body, http.StatusBadRequest)
+assertResponseStatus(t, body, http.StatusUnauthorized)
 ```
 
 ### Task State Assertions
@@ -592,6 +605,38 @@ assert.GreaterOrEqual(t, resp.StatusCode, 400)
 assertTaskFieldEquals[string](t, f.DB, taskID, "status", "todo")
 ```
 
+### Unique Identifiers — Don't Depend on Cleanup
+
+Write tests so they don't depend on cleanup running successfully. Cleanup may fail because tests are killed, crash mid-run, or timeout.
+
+**Use unique identifiers** for test data instead of shared state:
+
+```go
+// ✗ DON'T - Depends on cleanup working
+email := "test-user@example.com"
+
+// ✓ DO - Use unique IDs (timestamp or UUID)
+email := fmt.Sprintf("test-user-%d@example.com", time.Now().UnixNano())
+email := fmt.Sprintf("test-user-%s@example.com", adapters.NewID().New())
+```
+
+If cleanup fails, next run gets a new unique ID and doesn't conflict.
+
+**Avoid `t.Parallel()` with TRUNCATE** — tests that truncate tables cannot run in parallel:
+
+```go
+// ✗ DON'T - TRUNCATE interferes with parallel tests
+func TestRemoveAll(t *testing.T) {
+    t.Parallel()  // This will break other tests
+    repo.RemoveAll(ctx)
+}
+
+// ✓ DO - Remove t.Parallel() for TRUNCATE tests
+func TestRemoveAll(t *testing.T) {
+    repo.RemoveAll(ctx)
+}
+```
+
 ---
 
 ## HTTP Test Helpers (`tests/helpers_test.go`)
@@ -643,19 +688,29 @@ func assertTaskFieldEquals[T comparable](t *testing.T, db *sqlx.DB, taskID, fiel
 func assertTaskFieldEmpty[T comparable](t *testing.T, db *sqlx.DB, taskID, field string)
 func assertUserExistsInDB(t *testing.T, db *sqlx.DB, userID string)
 func assertUserDeletedInDB(t *testing.T, db *sqlx.DB, userID string)
+func assertUserFieldEquals[T comparable](t *testing.T, db *sqlx.DB, userID, field string, expected T)
 func assertCommentExistsInDB(t *testing.T, db *sqlx.DB, commentID string)
 func assertCommentDeletedInDB(t *testing.T, db *sqlx.DB, commentID string)
+```
+
+Response status helpers (for APIs that return status in JSON body):
+
+```go
+func getResponseStatus(body []byte) float64
+func assertResponseStatus(t *testing.T, body []byte, expectedStatus int)
 ```
 
 Setup helpers:
 
 ```go
 func createUserAndGetID(t *testing.T, db *sqlx.DB) string
+func createUserWithRoleAndGetToken(t *testing.T, db *sqlx.DB, role string) (userID, token string)
 func createTaskAndGetID(t *testing.T, db *sqlx.DB, token, creatorID string) string
 func getTaskIDByTitle(t *testing.T, db *sqlx.DB, title string) string
 func getTaskTagIDByName(t *testing.T, db *sqlx.DB, taskID, name string) string
 func getCommentIDByContent(t *testing.T, db *sqlx.DB, taskID, content string) string
 func getTaskField[T any](t *testing.T, db *sqlx.DB, taskID, field string) T
+func getUserField[T any](t *testing.T, db *sqlx.DB, userID, field string) T
 ```
 
 ---
@@ -775,6 +830,7 @@ func testCreateTask(t *testing.T, f *TestFixtures) {
 | Directive | Helper / Code |
 |-----------|---------------|
 | `GIVEN user with role X` | `postUser` + `login` → parse token, query DB for `userID` |
+| `GIVEN user with role X (quick)` | `createUserWithRoleAndGetToken(t, db, "employer")` → returns `(userID, token)` |
 | `GIVEN task with status todo` | `createUserAndGetID` + `createTaskAndGetID` |
 | `GIVEN task with status in_progress` | create + `putTaskStatus("in_progress")` |
 | `GIVEN task with status completed` | create + putTaskStatus("in_progress") + putTaskStatus("completed") |
@@ -796,15 +852,20 @@ func testCreateTask(t *testing.T, f *TestFixtures) {
 | `WHEN employer sets priority X` | `putTaskPriority(t, token, taskID, ...)` |
 | `WHEN admin changes role to X` | `putUserRole(t, token, userID, ...)` |
 | `THEN no error / succeeds` | `require.Equal(t, 200, resp.StatusCode, string(body))` |
-| `THEN an error is returned` | `assert.GreaterOrEqual(t, resp.StatusCode, 400)` |
-| `THEN forbidden error` | `assert.Equal(t, 403, resp.StatusCode)` |
-| `THEN not found error` | `assert.Equal(t, 404, resp.StatusCode)` |
+| `THEN an error is returned` | `assert.GreaterOrEqual(t, int(getResponseStatus(body)), 400)` |
+| `THEN forbidden error` | `assertResponseStatus(t, body, 403)` |
+| `THEN not found error` | `assertResponseStatus(t, body, 404)` |
+| `THEN bad request error` | `assertResponseStatus(t, body, 400)` |
+| `THEN unauthorized error` | `assertResponseStatus(t, body, 401)` |
 | `THEN task has status X` | `assertTaskFieldEquals[string](t, db, taskID, "status", X)` |
 | `THEN task assigned to user` | `assertTaskFieldEquals[string](t, db, taskID, "assigned_to", userID)` |
 | `THEN task not assigned` | `assertTaskFieldEmpty[string](t, db, taskID, "assigned_to")` |
 | `THEN task is archived` | `assertTaskArchived(t, db, taskID)` |
 | `THEN task is deleted` | `assertTaskDeletedInDB(t, db, taskID)` |
 | `THEN task exists` | `assertTaskExistsInDB(t, db, taskID)` |
+| `THEN user has role X` | `assertUserFieldEquals[string](t, db, userID, "role", X)` |
+| `THEN user has name X` | `assertUserFieldEquals[string](t, db, userID, "name", X)` |
+| `THEN user is deleted` | `assertUserDeletedInDB(t, db, userID)` |
 | `THEN comment exists` | `assertCommentExistsInDB(t, db, commentID)` |
 | `THEN comment is deleted` | `assertCommentDeletedInDB(t, db, commentID)` |
 | `THEN activity log includes X` | `getTaskActivity` + `json.Unmarshal` + `assert.Contains(t, types, X)` |

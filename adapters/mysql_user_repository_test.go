@@ -75,6 +75,13 @@ func TestMysqlUserRepository_FindById(t *testing.T) {
 	err := userRepository.Add(context.Background(), existingUser)
 	require.NoError(t, err)
 
+	deletedUser := newEmployerUser(t)
+	err = userRepository.Add(context.Background(), deletedUser)
+	require.NoError(t, err)
+	err = userRepository.DeleteByID(context.Background(), deletedUser.UUID())
+	require.NoError(t, err)
+	deletedUserUUID := deletedUser.UUID()
+
 	testCases := []struct {
 		Name        string
 		UUID        string
@@ -88,6 +95,11 @@ func TestMysqlUserRepository_FindById(t *testing.T) {
 		{
 			Name:        "not_found",
 			UUID:        "non-existent-uuid",
+			ShouldExist: false,
+		},
+		{
+			Name:        "deleted_user",
+			UUID:        deletedUserUUID,
 			ShouldExist: false,
 		},
 	}

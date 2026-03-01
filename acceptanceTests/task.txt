@@ -1,0 +1,730 @@
+;===============================================================
+; task.txt - Task lifecycle and permissions
+;===============================================================
+
+;===============================================================
+; POST /api/tasks - Task creation scenarios
+;===============================================================
+
+;===============================================================
+; Admin creates task
+;===============================================================
+GIVEN an admin user is authenticated.
+
+WHEN the admin creates a task with title "New Task".
+
+THEN no error is returned.
+and the task exists in the database with status "todo".
+
+;===============================================================
+; Employer creates task
+;===============================================================
+GIVEN an employer user is authenticated.
+
+WHEN the employer creates a task with title "New Task".
+
+THEN no error is returned.
+and the task exists in the database with status "todo".
+
+;===============================================================
+; Employee creates task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+
+WHEN the employee creates a task with title "New Task".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Create task with empty title returns 400 error
+;===============================================================
+GIVEN an admin user is authenticated.
+
+WHEN the admin creates a task with title "".
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Create task with missing title returns 400 error
+;===============================================================
+GIVEN an admin user is authenticated.
+
+WHEN the admin creates a task without a title.
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Create task with very long title succeeds
+;===============================================================
+GIVEN an admin user is authenticated.
+
+WHEN the admin creates a task with a 500-character title.
+
+THEN no error is returned.
+
+;===============================================================
+; GET /api/tasks - List tasks scenarios
+;===============================================================
+
+;===============================================================
+; Admin lists all tasks
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN multiple tasks exist in the database.
+
+WHEN the admin requests the task list.
+
+THEN no error is returned.
+and the response contains all tasks.
+
+;===============================================================
+; Employer lists tasks
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN multiple tasks exist in the database.
+
+WHEN the employer requests the task list.
+
+THEN no error is returned.
+and the response contains all tasks.
+
+;===============================================================
+; Employee lists only assigned tasks
+;===============================================================
+GIVEN an employee user is authenticated with ID "emp-123".
+GIVEN a task exists with status todo.
+GIVEN the task is assigned to the employee.
+GIVEN another task exists without assignment.
+
+WHEN the employee requests the task list.
+
+THEN no error is returned.
+and the response contains only the assigned task.
+
+;===============================================================
+; Employee with no assignments gets empty list
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN tasks exist but none are assigned to the employee.
+
+WHEN the employee requests the task list.
+
+THEN no error is returned.
+and the response contains an empty list.
+
+;===============================================================
+; List tasks with pagination
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN 50 tasks exist in the database.
+
+WHEN the admin requests the task list with limit 10 and offset 20.
+
+THEN no error is returned.
+and the response contains 10 tasks.
+and the tasks are from offset 20.
+
+;===============================================================
+; List tasks includes archived
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN the task is archived.
+
+WHEN the admin requests the task list including archived.
+
+THEN no error is returned.
+and the response contains the archived task.
+
+;===============================================================
+; List tasks filtered by status
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN a task exists with status "todo".
+GIVEN a task exists with status "in_progress".
+
+WHEN the admin requests the task list filtered by status "todo".
+
+THEN no error is returned.
+and the response contains only tasks with status "todo".
+
+;===============================================================
+; List tasks sorted by due date
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN multiple tasks exist with different due dates.
+
+WHEN the admin requests the task list sorted by due date ascending.
+
+THEN no error is returned.
+and the tasks are ordered by due date ascending.
+
+;===============================================================
+; PUT /api/tasks/{id}/status - Status change scenarios
+;===============================================================
+
+;===============================================================
+; Valid transition: todo to in_progress
+;===============================================================
+GIVEN a task exists with status todo.
+
+WHEN the admin changes the task status to "in_progress".
+
+THEN no error is returned.
+and the task has status "in_progress" in the database.
+
+;===============================================================
+; Valid transition: todo to pending
+;===============================================================
+GIVEN a task exists with status todo.
+
+WHEN the admin changes the task status to "pending".
+
+THEN no error is returned.
+and the task has status "pending" in the database.
+
+;===============================================================
+; Valid transition: pending to todo
+;===============================================================
+GIVEN a task exists with status pending.
+
+WHEN the admin changes the task status to "todo".
+
+THEN no error is returned.
+and the task has status "todo" in the database.
+
+;===============================================================
+; Valid transition: pending to in_progress
+;===============================================================
+GIVEN a task exists with status pending.
+
+WHEN the admin changes the task status to "in_progress".
+
+THEN no error is returned.
+and the task has status "in_progress" in the database.
+
+;===============================================================
+; Valid transition: in_progress to completed
+;===============================================================
+GIVEN a task exists with status in_progress.
+
+WHEN the admin changes the task status to "completed".
+
+THEN no error is returned.
+and the task has status "completed" in the database.
+
+;===============================================================
+; Valid transition: in_progress to pending
+;===============================================================
+GIVEN a task exists with status in_progress.
+
+WHEN the admin changes the task status to "pending".
+
+THEN no error is returned.
+and the task has status "pending" in the database.
+
+;===============================================================
+; Invalid transition: todo to completed
+;===============================================================
+GIVEN a task exists with status todo.
+
+WHEN the admin changes the task status to "completed".
+
+THEN an error is returned.
+and the task still has status "todo" in the database.
+
+;===============================================================
+; Invalid transition: completed to any
+;===============================================================
+GIVEN a task exists with status completed.
+
+WHEN the admin changes the task status to "todo".
+
+THEN an error is returned.
+and the task still has status "completed" in the database.
+
+;===============================================================
+; Assigned user changes status
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+GIVEN the task is assigned to the user.
+
+WHEN the assigned user changes the task status to "in_progress".
+
+THEN no error is returned.
+and the task has status "in_progress" in the database.
+
+;===============================================================
+; Unassigned employee changes status returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee changes the task status to "in_progress".
+
+THEN a forbidden error is returned.
+and the task still has status "todo" in the database.
+
+;===============================================================
+; Non-admin/non-employer changes unassigned task returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee changes the task status to "in_progress".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Change status of non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+
+WHEN the admin changes task "nonexistent-123" status to "in_progress".
+
+THEN a not found error is returned.
+
+;===============================================================
+; PATCH /api/tasks/{id} - Title update scenarios
+;===============================================================
+
+;===============================================================
+; Admin updates title
+;===============================================================
+GIVEN a task exists with title "Old Title".
+
+WHEN the admin updates the task title to "New Title".
+
+THEN no error is returned.
+and the task has title "New Title" in the database.
+
+;===============================================================
+; Employer updates title
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with title "Old Title".
+
+WHEN the employer updates the task title to "New Title".
+
+THEN no error is returned.
+and the task has title "New Title" in the database.
+
+;===============================================================
+; Assigned user updates title
+;===============================================================
+GIVEN a task exists with title "Old Title".
+GIVEN a user exists with role employer.
+GIVEN the task is assigned to the user.
+
+WHEN the assigned user updates the task title to "New Title".
+
+THEN no error is returned.
+and the task has title "New Title" in the database.
+
+;===============================================================
+; Unassigned employee updates title returns forbidden
+;===============================================================
+GIVEN a task exists with title "Old Title".
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee updates the task title to "New Title".
+
+THEN a forbidden error is returned.
+and the task still has title "Old Title" in the database.
+
+;===============================================================
+; Update title to empty returns 400 error
+;===============================================================
+GIVEN a task exists with title "Old Title".
+
+WHEN the admin updates the task title to "".
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Update non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+
+WHEN the admin updates task "nonexistent-123" title to "New Title".
+
+THEN a not found error is returned.
+
+;===============================================================
+; PUT /api/tasks/{id}/priority - Priority scenarios
+;===============================================================
+
+;===============================================================
+; Admin sets priority
+;===============================================================
+GIVEN a task exists with priority "medium".
+
+WHEN the admin sets the task priority to "high".
+
+THEN no error is returned.
+and the task has priority "high" in the database.
+
+;===============================================================
+; Employer sets priority
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with priority "medium".
+
+WHEN the employer sets the task priority to "high".
+
+THEN no error is returned.
+and the task has priority "high" in the database.
+
+;===============================================================
+; Employee sets priority returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with priority "medium".
+
+WHEN the employee sets the task priority to "high".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Set invalid priority value returns 400 error
+;===============================================================
+GIVEN a task exists.
+
+WHEN the admin sets the task priority to "invalid".
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Set priority on non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+
+WHEN the admin sets task "nonexistent-123" priority to "high".
+
+THEN a not found error is returned.
+
+;===============================================================
+; PATCH /api/tasks/{id}/description - Description scenarios
+;===============================================================
+
+;===============================================================
+; Admin updates description
+;===============================================================
+GIVEN a task exists with description "Old description".
+
+WHEN the admin updates the task description to "New description".
+
+THEN no error is returned.
+and the task has description "New description" in the database.
+
+;===============================================================
+; Employer updates description
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with description "Old description".
+
+WHEN the employer updates the task description to "New description".
+
+THEN no error is returned.
+and the task has description "New description" in the database.
+
+;===============================================================
+; Assigned user updates description
+;===============================================================
+GIVEN a task exists with description "Old description".
+GIVEN a user exists with role employer.
+GIVEN the task is assigned to the user.
+
+WHEN the assigned user updates the task description to "New description".
+
+THEN no error is returned.
+and the task has description "New description" in the database.
+
+;===============================================================
+; Unassigned employee updates description returns forbidden
+;===============================================================
+GIVEN a task exists with description "Old description".
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee updates the task description to "New description".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Update description on non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+
+WHEN the admin updates task "nonexistent-123" description to "New description".
+
+THEN a not found error is returned.
+
+;===============================================================
+; PUT /api/tasks/{id}/due-date - Due date scenarios
+;===============================================================
+
+;===============================================================
+; Admin sets due date
+;===============================================================
+GIVEN a task exists without a due date.
+
+WHEN the admin sets the task due date to "2027-03-01T10:00:00Z".
+
+THEN no error is returned.
+and the task has due date "2027-03-01T10:00:00Z" in the database.
+
+;===============================================================
+; Employer sets due date
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists without a due date.
+
+WHEN the employer sets the task due date to "2027-03-01T10:00:00Z".
+
+THEN no error is returned.
+and the task has due date "2027-03-01T10:00:00Z" in the database.
+
+;===============================================================
+; Employee sets due date returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists without a due date.
+
+WHEN the employee sets the task due date to "2027-03-01T10:00:00Z".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; PUT /api/tasks/{id}/assign/{userId} - Assignment scenarios
+;===============================================================
+
+;===============================================================
+; Admin assigns task to employer
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+
+WHEN the admin assigns the task to the employer.
+
+THEN no error is returned.
+and the task is assigned to the employer in the database.
+
+;===============================================================
+; Employer assigns task
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN another user exists with role employer.
+
+WHEN the employer assigns the task to the other employer.
+
+THEN no error is returned.
+and the task is assigned to the other employer in the database.
+
+;===============================================================
+; Admin assigns task to employee fails
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employee.
+
+WHEN the admin assigns the task to the employee.
+
+THEN an error is returned.
+and the task is not assigned in the database.
+
+;===============================================================
+; Employee assigns task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+
+WHEN the employee assigns the task to the employer.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Assign to non-existent user returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN no user exists with ID "nonexistent-123".
+
+WHEN the admin assigns the task to user "nonexistent-123".
+
+THEN a not found error is returned.
+
+;===============================================================
+; DELETE /api/tasks/{id}/assign - Unassignment scenarios
+;===============================================================
+
+;===============================================================
+; Admin unassigns task
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN the task is assigned to a user.
+
+WHEN the admin unassigns the task.
+
+THEN no error is returned.
+and the task is not assigned in the database.
+
+;===============================================================
+; Employer unassigns task
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN the task is assigned to a user.
+
+WHEN the employer unassigns the task.
+
+THEN no error is returned.
+and the task is not assigned in the database.
+
+;===============================================================
+; Employee unassigns task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN the task is assigned to a user.
+
+WHEN the employee unassigns the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; PUT /api/tasks/{id}/archive - Archive scenarios
+;===============================================================
+
+;===============================================================
+; Admin archives task
+;===============================================================
+GIVEN a task exists with status todo.
+
+WHEN the admin archives the task.
+
+THEN no error is returned.
+and the task is archived in the database.
+
+;===============================================================
+; Employer archives task
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with status todo.
+
+WHEN the employer archives the task.
+
+THEN no error is returned.
+and the task is archived in the database.
+
+;===============================================================
+; Employee archives task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with status todo.
+
+WHEN the employee archives the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Archive already archived task is idempotent
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN the task is archived.
+
+WHEN the admin archives the task again.
+
+THEN no error is returned.
+
+;===============================================================
+; PUT /api/tasks/{id}/reopen - Reopen scenarios
+;===============================================================
+
+;===============================================================
+; Admin reopens archived task
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN the task is archived.
+
+WHEN the admin reopens the task.
+
+THEN no error is returned.
+and the task is not archived in the database.
+
+;===============================================================
+; Employer reopens archived task
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN the task is archived.
+
+WHEN the employer reopens the task.
+
+THEN no error is returned.
+and the task is not archived in the database.
+
+;===============================================================
+; Employee reopens task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with status todo.
+GIVEN the task is archived.
+
+WHEN the employee reopens the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; DELETE /api/tasks/{id} - Delete scenarios
+;===============================================================
+
+;===============================================================
+; Admin deletes task
+;===============================================================
+GIVEN a task exists with status todo.
+
+WHEN the admin deletes the task.
+
+THEN no error is returned.
+and the task is soft-deleted in the database.
+
+;===============================================================
+; Employer (creator) deletes own task
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists created by the employer.
+
+WHEN the employer deletes the task.
+
+THEN no error is returned.
+and the task is soft-deleted in the database.
+
+;===============================================================
+; Employer deletes another's task returns forbidden
+;===============================================================
+GIVEN an employer user is authenticated.
+GIVEN a task exists created by another user.
+
+WHEN the employer deletes the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Employee deletes task returns forbidden
+;===============================================================
+GIVEN an employee user is authenticated.
+GIVEN a task exists with status todo.
+
+WHEN the employee deletes the task.
+
+THEN a forbidden error is returned.

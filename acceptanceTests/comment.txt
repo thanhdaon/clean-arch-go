@@ -1,0 +1,183 @@
+;===============================================================
+; comment.txt - Comment CRUD and author restrictions
+;===============================================================
+
+;===============================================================
+; POST /api/tasks/{taskId}/comments - Add comment scenarios
+;===============================================================
+
+;===============================================================
+; Admin adds comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+
+WHEN the admin adds a comment "This is a comment" to the task.
+
+THEN no error is returned.
+and the comment exists on the task.
+
+;===============================================================
+; Employer adds comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employer user is authenticated.
+
+WHEN the employer adds a comment "This is a comment" to the task.
+
+THEN no error is returned.
+and the comment exists on the task.
+
+;===============================================================
+; Assigned user adds comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+GIVEN the task is assigned to the user.
+
+WHEN the assigned user adds a comment "This is a comment" to the task.
+
+THEN no error is returned.
+and the comment exists on the task.
+
+;===============================================================
+; Unassigned user adds comment returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee adds a comment "This is a comment" to the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Add comment with empty content returns 400 error
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+
+WHEN the admin adds a comment "" to the task.
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Add comment to non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+
+WHEN the admin adds a comment "This is a comment" to task "nonexistent-123".
+
+THEN a not found error is returned.
+
+;===============================================================
+; PATCH /api/tasks/{taskId}/comments/{id} - Update comment scenarios
+;===============================================================
+
+;===============================================================
+; Author updates own comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN user "user-123" is authenticated.
+
+WHEN the author updates the comment to "Updated content".
+
+THEN no error is returned.
+and the comment has content "Updated content" in the database.
+
+;===============================================================
+; Non-author updates comment returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN another user is authenticated with ID "user-456".
+
+WHEN the non-author updates the comment to "Updated content".
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Admin updates any comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN an admin user is authenticated.
+
+WHEN the admin updates the comment to "Updated by admin".
+
+THEN no error is returned.
+and the comment has content "Updated by admin" in the database.
+
+;===============================================================
+; Update comment with empty content returns 400 error
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task.
+GIVEN the comment author is authenticated.
+
+WHEN the author updates the comment to "".
+
+THEN a bad request error is returned.
+
+;===============================================================
+; Update comment on non-existent task returns 404 error
+;===============================================================
+GIVEN an admin user is authenticated.
+GIVEN no task exists with ID "nonexistent-123".
+GIVEN a comment ID "comment-123" is provided.
+
+WHEN the admin updates comment "comment-123" on task "nonexistent-123".
+
+THEN a not found error is returned.
+
+;===============================================================
+; DELETE /api/tasks/{taskId}/comments/{id} - Delete comment scenarios
+;===============================================================
+
+;===============================================================
+; Author deletes own comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN user "user-123" is authenticated.
+
+WHEN the author deletes the comment.
+
+THEN no error is returned.
+and the comment is deleted in the database.
+
+;===============================================================
+; Non-author deletes comment returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN another user is authenticated with ID "user-456".
+
+WHEN the non-author deletes the comment.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Admin deletes any comment
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a comment exists on the task by user "user-123".
+GIVEN an admin user is authenticated.
+
+WHEN the admin deletes the comment.
+
+THEN no error is returned.
+and the comment is deleted in the database.
+
+;===============================================================
+; Delete non-existent comment returns 404 error
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+GIVEN no comment exists with ID "nonexistent-123".
+
+WHEN the admin deletes comment "nonexistent-123".
+
+THEN a not found error is returned.

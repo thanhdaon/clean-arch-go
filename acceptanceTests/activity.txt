@@ -1,0 +1,146 @@
+;===============================================================
+; activity.txt - Audit trail verification
+;===============================================================
+
+;===============================================================
+; GET /api/tasks/{taskId}/activity - Activity log access scenarios
+;===============================================================
+
+;===============================================================
+; Admin gets activity log
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+
+WHEN the admin requests the activity log for the task.
+
+THEN no error is returned.
+and the response contains the activity log.
+
+;===============================================================
+; Employer gets activity log
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employer user is authenticated.
+
+WHEN the employer requests the activity log for the task.
+
+THEN no error is returned.
+and the response contains the activity log.
+
+;===============================================================
+; Employee gets activity of assigned task
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+GIVEN the task is assigned to the user.
+
+WHEN the assigned user requests the activity log for the task.
+
+THEN no error is returned.
+and the response contains the activity log.
+
+;===============================================================
+; Employee gets activity of unassigned task returns forbidden
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an employee user is authenticated.
+GIVEN the task is not assigned to the employee.
+
+WHEN the employee requests the activity log for the task.
+
+THEN a forbidden error is returned.
+
+;===============================================================
+; Activity entries created for mutations
+;===============================================================
+
+;===============================================================
+; Status change creates status_changed activity
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+
+WHEN the admin changes the task status to "in_progress".
+
+THEN no error is returned.
+and the task activity log includes a "status_changed" event.
+
+;===============================================================
+; Task assignment creates assigned activity
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN a user exists with role employer.
+GIVEN an admin user is authenticated.
+
+WHEN the admin assigns the task to the employer.
+
+THEN no error is returned.
+and the task activity log includes an "assigned" event.
+
+;===============================================================
+; Task unassignment creates unassigned activity
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN the task is assigned to a user.
+GIVEN an admin user is authenticated.
+
+WHEN the admin unassigns the task.
+
+THEN no error is returned.
+and the task activity log includes an "unassigned" event.
+
+;===============================================================
+; Title update creates title_updated activity
+;===============================================================
+GIVEN a task exists with title "Old Title".
+GIVEN an admin user is authenticated.
+
+WHEN the admin updates the task title to "New Title".
+
+THEN no error is returned.
+and the task activity log includes a "title_updated" event.
+
+;===============================================================
+; Priority change creates priority_changed activity
+;===============================================================
+GIVEN a task exists with priority "medium".
+GIVEN an admin user is authenticated.
+
+WHEN the admin sets the task priority to "high".
+
+THEN no error is returned.
+and the task activity log includes a "priority_changed" event.
+
+;===============================================================
+; Due date set creates due_date_set activity
+;===============================================================
+GIVEN a task exists without a due date.
+GIVEN an admin user is authenticated.
+
+WHEN the admin sets the task due date to "2027-03-01T10:00:00Z".
+
+THEN no error is returned.
+and the task activity log includes a "due_date_set" event.
+
+;===============================================================
+; Description set creates description_set activity
+;===============================================================
+GIVEN a task exists without a description.
+GIVEN an admin user is authenticated.
+
+WHEN the admin updates the task description to "New description".
+
+THEN no error is returned.
+and the task activity log includes a "description_set" event.
+
+;===============================================================
+; Comment add/update/delete creates corresponding activity
+;===============================================================
+GIVEN a task exists with status todo.
+GIVEN an admin user is authenticated.
+
+WHEN the admin adds a comment "Test comment" to the task.
+
+THEN no error is returned.
+and the task activity log includes a "comment_added" event.

@@ -3,6 +3,8 @@ package adapters_test
 import (
 	"clean-arch-go/adapters"
 	"clean-arch-go/app/query"
+	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
@@ -178,4 +180,28 @@ func compareTimesIgnoringNanoseconds(t *testing.T, t1, t2 time.Time) {
 	t.Helper()
 
 	require.Equal(t, t1.Truncate(time.Minute).UTC(), t2.Truncate(time.Minute).UTC())
+}
+
+func newDeletedTask(t *testing.T, creator user.User) task.Task {
+	t.Helper()
+	newTask, err := task.NewTask(creator, adapters.NewID().New(), "deleted task")
+	require.NoError(t, err)
+	err = newTask.Delete(creator)
+	require.NoError(t, err)
+	return newTask
+}
+
+func newArchivedTask(t *testing.T, creator user.User) task.Task {
+	t.Helper()
+	newTask, err := task.NewTask(creator, adapters.NewID().New(), "archived task")
+	require.NoError(t, err)
+	err = newTask.Archive(creator)
+	require.NoError(t, err)
+	return newTask
+}
+
+func assertErrorIsNotExist(t *testing.T, err error) {
+	t.Helper()
+	require.Error(t, err)
+	require.True(t, errors.Is(errkind.NotExist, err), "expected NotExist error, got: %v", err)
 }

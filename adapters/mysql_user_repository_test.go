@@ -163,6 +163,30 @@ func TestMysqlUserRepository_FindByEmail(t *testing.T) {
 	}
 }
 
+func TestMysqlUserRepository_FindAll(t *testing.T) {
+	userRepository := newMysqlUserRepository(t)
+	require.NoError(t, userRepository.RemoveAll(context.Background()))
+
+	t.Run("empty", func(t *testing.T) {
+		users, err := userRepository.FindAll(context.Background())
+
+		require.NoError(t, err)
+		require.Empty(t, users)
+	})
+
+	t.Run("multiple_users", func(t *testing.T) {
+		user1 := newEmployeeUser(t)
+		user2 := newEmployerUser(t)
+		require.NoError(t, userRepository.Add(context.Background(), user1))
+		require.NoError(t, userRepository.Add(context.Background(), user2))
+
+		users, err := userRepository.FindAll(context.Background())
+
+		require.NoError(t, err)
+		require.Len(t, users, 2)
+	})
+}
+
 func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

@@ -233,23 +233,28 @@ func TestMysqlTaskRepository_AllTasks_ExcludesArchived(t *testing.T) {
 }
 
 func TestMysqlTaskRepository_RemoveAllTasks(t *testing.T) {
+	t.Parallel()
 	taskRepository := newMysqlTaskRepository(t)
 	creator := newExampleEmployer(t)
 
 	task1 := newExampleTask(t, creator)
+	task1UUID := task1.UUID()
 	err := taskRepository.Add(context.Background(), task1)
 	require.NoError(t, err)
 
 	task2 := newExampleTask(t, creator)
+	task2UUID := task2.UUID()
 	err = taskRepository.Add(context.Background(), task2)
 	require.NoError(t, err)
 
 	err = taskRepository.RemoveAllTasks(context.Background())
 	require.NoError(t, err)
 
-	allTasks, err := taskRepository.AllTasks(context.Background())
-	require.NoError(t, err)
-	require.Empty(t, allTasks)
+	_, err = taskRepository.FindById(context.Background(), task1UUID)
+	assertErrorIsNotExist(t, err)
+
+	_, err = taskRepository.FindById(context.Background(), task2UUID)
+	assertErrorIsNotExist(t, err)
 }
 
 func TestMysqlTaskRepository_AddTag(t *testing.T) {

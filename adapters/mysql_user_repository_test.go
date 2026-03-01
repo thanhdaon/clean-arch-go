@@ -215,6 +215,44 @@ func TestMysqlUserRepository_FindAll(t *testing.T) {
 	})
 }
 
+func TestMysqlUserRepository_DeleteByID(t *testing.T) {
+	t.Parallel()
+	userRepository := newMysqlUserRepository(t)
+
+	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+		existingUser := newEmployeeUser(t)
+		require.NoError(t, userRepository.Add(context.Background(), existingUser))
+
+		err := userRepository.DeleteByID(context.Background(), existingUser.UUID())
+
+		require.NoError(t, err)
+		_, err = userRepository.FindById(context.Background(), existingUser.UUID())
+		require.True(t, errors.Is(errkind.NotExist, err))
+	})
+
+	t.Run("not_found", func(t *testing.T) {
+		t.Parallel()
+
+		err := userRepository.DeleteByID(context.Background(), "non-existent-uuid")
+
+		require.Error(t, err)
+		require.True(t, errors.Is(errkind.NotExist, err))
+	})
+
+	t.Run("already_deleted", func(t *testing.T) {
+		t.Parallel()
+		existingUser := newEmployeeUser(t)
+		require.NoError(t, userRepository.Add(context.Background(), existingUser))
+		require.NoError(t, userRepository.DeleteByID(context.Background(), existingUser.UUID()))
+
+		err := userRepository.DeleteByID(context.Background(), existingUser.UUID())
+
+		require.Error(t, err)
+		require.True(t, errors.Is(errkind.NotExist, err))
+	})
+}
+
 func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

@@ -34,6 +34,19 @@ func TestMysqlCommentRepository_AddAndUpdate(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestMysqlCommentRepository_UpdateByID_NotFound(t *testing.T) {
+	t.Parallel()
+	db, err := adapters.NewMySQLConnection()
+	require.NoError(t, err)
+	repo := adapters.NewMysqlCommentRepository(db)
+
+	ctx := context.Background()
+	err = repo.UpdateByID(ctx, "non-existent-uuid", func(ctx context.Context, existing comment.Comment) (comment.Comment, error) {
+		return existing, nil
+	})
+	assertErrorIsNotExist(t, err)
+}
+
 func seedUserAndTask(t *testing.T, ctx context.Context, userRepo adapters.MysqlUserRepository, taskRepo adapters.MysqlTaskRepository) (user.User, task.Task) {
 	t.Helper()
 	u, err := user.NewUser(adapters.NewID().New(), user.RoleEmployer, "Seed User", "seed@example.com")

@@ -2,6 +2,8 @@ package adapters_test
 
 import (
 	"clean-arch-go/adapters"
+	"clean-arch-go/core/errors"
+	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/user"
 	"context"
 	"testing"
@@ -63,6 +65,48 @@ func TestMysqlUserRepository_Update(t *testing.T) {
 	require.NoError(t, err)
 
 	assertPersistedUserEquals(t, userRepository, updatedUser)
+}
+
+func TestMysqlUserRepository_FindById(t *testing.T) {
+	t.Parallel()
+	userRepository := newMysqlUserRepository(t)
+
+	existingUser := newEmployeeUser(t)
+	err := userRepository.Add(context.Background(), existingUser)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		Name        string
+		UUID        string
+		ShouldExist bool
+	}{
+		{
+			Name:        "found",
+			UUID:        existingUser.UUID(),
+			ShouldExist: true,
+		},
+		{
+			Name:        "not_found",
+			UUID:        "non-existent-uuid",
+			ShouldExist: false,
+		},
+	}
+
+	for _, c := range testCases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			found, err := userRepository.FindById(context.Background(), c.UUID)
+
+			if c.ShouldExist {
+				require.NoError(t, err)
+				assertUsersEquals(t, existingUser, found)
+			} else {
+				require.Error(t, err)
+				require.True(t, errors.Is(errkind.NotExist, err))
+			}
+		})
+	}
 }
 
 func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {

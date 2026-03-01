@@ -161,6 +161,49 @@ func TestMysqlTaskRepository_UpdateByID_DeletedTask(t *testing.T) {
 	assertErrorIsNotExist(t, err)
 }
 
+func TestMysqlTaskRepository_UpdateByID_ArchivedTask(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	archivedTask := newArchivedTask(t, creator)
+	err := taskRepository.Add(context.Background(), archivedTask)
+	require.NoError(t, err)
+
+	err = taskRepository.UpdateByID(context.Background(), archivedTask.UUID(), func(ctx context.Context, found task.Task) (task.Task, error) {
+		return found, nil
+	})
+	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlTaskRepository_UpdateByID_UpdateFnError(t *testing.T) {
+	t.Parallel()
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	existingTask := newExampleTask(t, creator)
+	err := taskRepository.Add(context.Background(), existingTask)
+	require.NoError(t, err)
+
+	expectedErr := errors.Str("update function failed")
+	err = taskRepository.UpdateByID(context.Background(), existingTask.UUID(), func(ctx context.Context, found task.Task) (task.Task, error) {
+		return nil, expectedErr
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), expectedErr.Error())
+}
+
+func TestMysqlTaskRepository_AllTasks_Empty(t *testing.T) {
+	taskRepository := newMysqlTaskRepository(t)
+
+	err := taskRepository.RemoveAllTasks(context.Background())
+	require.NoError(t, err)
+
+	allTasks, err := taskRepository.AllTasks(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, allTasks)
+}
+
 func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

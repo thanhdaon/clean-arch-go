@@ -121,6 +121,48 @@ func TestMysqlUserRepository_FindById(t *testing.T) {
 	}
 }
 
+func TestMysqlUserRepository_FindByEmail(t *testing.T) {
+	t.Parallel()
+	userRepository := newMysqlUserRepository(t)
+
+	existingUser := newEmployeeUser(t)
+	err := userRepository.Add(context.Background(), existingUser)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		Name        string
+		Email       string
+		ShouldExist bool
+	}{
+		{
+			Name:        "found",
+			Email:       existingUser.Email(),
+			ShouldExist: true,
+		},
+		{
+			Name:        "not_found",
+			Email:       "nonexistent@example.com",
+			ShouldExist: false,
+		},
+	}
+
+	for _, c := range testCases {
+		t.Run(c.Name, func(t *testing.T) {
+			t.Parallel()
+
+			found, err := userRepository.FindByEmail(context.Background(), c.Email)
+
+			if c.ShouldExist {
+				require.NoError(t, err)
+				require.Equal(t, existingUser.Email(), found.Email())
+			} else {
+				require.Error(t, err)
+				require.True(t, errors.Is(errkind.NotExist, err))
+			}
+		})
+	}
+}
+
 func newMysqlUserRepository(t *testing.T) adapters.MysqlUserRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

@@ -14,34 +14,38 @@ import (
 
 func TestMysqlUserRepository_Add(t *testing.T) {
 	t.Parallel()
-	userRepository := newMysqlUserRepository(t)
 
-	testCases := []struct {
-		Name            string
-		UserConstructor func(t *testing.T) user.User
-	}{
-		{
-			Name:            "employee_user",
-			UserConstructor: newEmployeeUser,
-		},
-		{
-			Name:            "employer_user",
-			UserConstructor: newEmployerUser,
-		},
-	}
+	t.Run("employee_user", func(t *testing.T) {
+		t.Parallel()
+		userRepository := newMysqlUserRepository(t)
 
-	for _, c := range testCases {
-		t.Run(c.Name, func(t *testing.T) {
-			t.Parallel()
+		expectedUser := newEmployeeUser(t)
+		err := userRepository.Add(context.Background(), expectedUser)
+		require.NoError(t, err)
+		assertPersistedUserEquals(t, userRepository, expectedUser)
+	})
 
-			expectedUser := c.UserConstructor(t)
-			err := userRepository.Add(context.Background(), expectedUser)
-			require.NoError(t, err)
-			assertPersistedUserEquals(t, userRepository, expectedUser)
-		})
-	}
+	t.Run("employer_user", func(t *testing.T) {
+		t.Parallel()
+		userRepository := newMysqlUserRepository(t)
 
-	require.NotNil(t, userRepository)
+		expectedUser := newEmployerUser(t)
+		err := userRepository.Add(context.Background(), expectedUser)
+		require.NoError(t, err)
+		assertPersistedUserEquals(t, userRepository, expectedUser)
+	})
+
+	t.Run("duplicate_id", func(t *testing.T) {
+		t.Parallel()
+		userRepository := newMysqlUserRepository(t)
+
+		existingUser := newEmployeeUser(t)
+		require.NoError(t, userRepository.Add(context.Background(), existingUser))
+
+		err := userRepository.Add(context.Background(), existingUser)
+
+		require.Error(t, err)
+	})
 }
 
 func TestMysqlUserRepository_UpdateByID(t *testing.T) {

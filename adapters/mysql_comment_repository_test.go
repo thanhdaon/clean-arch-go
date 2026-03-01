@@ -2,6 +2,7 @@ package adapters_test
 
 import (
 	"clean-arch-go/adapters"
+	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/comment"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
@@ -45,6 +46,28 @@ func TestMysqlCommentRepository_UpdateByID_NotFound(t *testing.T) {
 		return existing, nil
 	})
 	assertErrorIsNotExist(t, err)
+}
+
+func TestMysqlCommentRepository_UpdateByID_UpdateFnError(t *testing.T) {
+	t.Parallel()
+	db, err := adapters.NewMySQLConnection()
+	require.NoError(t, err)
+	repo := adapters.NewMysqlCommentRepository(db)
+	taskRepo := adapters.NewMysqlTaskRepository(db)
+	userRepo := adapters.NewMysqlUserRepository(db)
+
+	ctx := context.Background()
+	u, tk := seedUserAndTask(t, ctx, userRepo, taskRepo)
+
+	c, _ := comment.New(tk.UUID(), u.UUID(), "Original content")
+	require.NoError(t, repo.Add(ctx, c))
+
+	expectedErr := errors.Str("update function failed")
+	err = repo.UpdateByID(ctx, c.UUID(), func(ctx context.Context, existing comment.Comment) (comment.Comment, error) {
+		return nil, expectedErr
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), expectedErr.Error())
 }
 
 func seedUserAndTask(t *testing.T, ctx context.Context, userRepo adapters.MysqlUserRepository, taskRepo adapters.MysqlTaskRepository) (user.User, task.Task) {

@@ -204,6 +204,68 @@ func TestMysqlTaskRepository_AllTasks_Empty(t *testing.T) {
 	require.Empty(t, allTasks)
 }
 
+func TestMysqlTaskRepository_AllTasks_ExcludesDeleted(t *testing.T) {
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	err := taskRepository.RemoveAllTasks(context.Background())
+	require.NoError(t, err)
+
+	activeTask := newExampleTask(t, creator)
+	err = taskRepository.Add(context.Background(), activeTask)
+	require.NoError(t, err)
+
+	deletedTask := newDeletedTask(t, creator)
+	err = taskRepository.Add(context.Background(), deletedTask)
+	require.NoError(t, err)
+
+	allTasks, err := taskRepository.AllTasks(context.Background())
+	require.NoError(t, err)
+	require.Len(t, allTasks, 1)
+	require.Equal(t, activeTask.UUID(), allTasks[0].UUID)
+}
+
+func TestMysqlTaskRepository_AllTasks_ExcludesArchived(t *testing.T) {
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	err := taskRepository.RemoveAllTasks(context.Background())
+	require.NoError(t, err)
+
+	activeTask := newExampleTask(t, creator)
+	err = taskRepository.Add(context.Background(), activeTask)
+	require.NoError(t, err)
+
+	archivedTask := newArchivedTask(t, creator)
+	err = taskRepository.Add(context.Background(), archivedTask)
+	require.NoError(t, err)
+
+	allTasks, err := taskRepository.AllTasks(context.Background())
+	require.NoError(t, err)
+	require.Len(t, allTasks, 1)
+	require.Equal(t, activeTask.UUID(), allTasks[0].UUID)
+}
+
+func TestMysqlTaskRepository_RemoveAllTasks(t *testing.T) {
+	taskRepository := newMysqlTaskRepository(t)
+	creator := newExampleEmployer(t)
+
+	task1 := newExampleTask(t, creator)
+	err := taskRepository.Add(context.Background(), task1)
+	require.NoError(t, err)
+
+	task2 := newExampleTask(t, creator)
+	err = taskRepository.Add(context.Background(), task2)
+	require.NoError(t, err)
+
+	err = taskRepository.RemoveAllTasks(context.Background())
+	require.NoError(t, err)
+
+	allTasks, err := taskRepository.AllTasks(context.Background())
+	require.NoError(t, err)
+	require.Empty(t, allTasks)
+}
+
 func newMysqlTaskRepository(t *testing.T) adapters.MysqlTaskRepository {
 	t.Helper()
 	db, err := adapters.NewMySQLConnection()

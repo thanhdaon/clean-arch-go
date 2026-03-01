@@ -70,7 +70,7 @@ func TestMysqlTaskRepository_AllTasks(t *testing.T) {
 	allTasks, err := taskRepository.AllTasks(context.Background())
 	require.NoError(t, err)
 
-	assertQueryTasksIncludes(t, allTasks, tasksToAdd)
+	assertQueryTasksIncludesExpected(t, allTasks, tasksToAdd)
 }
 
 func TestMysqlTaskRepository_Update(t *testing.T) {
@@ -325,23 +325,24 @@ func newUpdatedTask(t *testing.T, creator user.User) task.Task {
 	return newTask
 }
 
-func assertQueryTasksIncludes(t *testing.T, allTasks []query.Task, tasks []task.Task) {
+func assertQueryTasksIncludesExpected(t *testing.T, allTasks []query.Task, expectedTasks []task.Task) {
 	t.Helper()
 
-	for _, t1 := range tasks {
-		for _, t2 := range allTasks {
-			if t1.UUID() == t2.UUID {
-				require.Equal(t, t1.Title(), t2.Title)
-				require.Equal(t, t1.Status().String(), t2.Status)
-				require.Equal(t, t1.CreatedBy(), t2.CreatedBy)
-				require.Equal(t, t1.AssignedTo(), t2.AssignedTo)
-				compareTimesIgnoringNanoseconds(t, t1.CreatedAt(), t2.CreatedAt)
-				compareTimesIgnoringNanoseconds(t, t1.UpdatedAt(), t2.UpdatedAt)
-				return
+	for _, expected := range expectedTasks {
+		found := false
+		for _, qt := range allTasks {
+			if expected.UUID() == qt.UUID {
+				require.Equal(t, expected.Title(), qt.Title)
+				require.Equal(t, expected.Status().String(), qt.Status)
+				require.Equal(t, expected.CreatedBy(), qt.CreatedBy)
+				require.Equal(t, expected.AssignedTo(), qt.AssignedTo)
+				compareTimesIgnoringNanoseconds(t, expected.CreatedAt(), qt.CreatedAt)
+				compareTimesIgnoringNanoseconds(t, expected.UpdatedAt(), qt.UpdatedAt)
+				found = true
+				break
 			}
 		}
-
-		t.Fatalf("task %s not found in query result", t1.UUID())
+		require.True(t, found, "expected task %s not found in query result", expected.UUID())
 	}
 }
 

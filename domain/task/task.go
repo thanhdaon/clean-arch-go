@@ -92,7 +92,7 @@ func (t *task) ChangeStatus(updater user.User, s Status) error {
 	}
 
 	if allow := t.allowToChangeStatus(updater); !allow {
-		return errors.New("user is not allow to update status of this task")
+		return errors.New("user is not allowed to update status of this task")
 	}
 
 	t.status = s
@@ -119,7 +119,7 @@ func (t *task) UpdateTitle(updater user.User, title string) error {
 	}
 
 	if allow := t.allowToUpdateTitle(updater); !allow {
-		return errors.New("user is not allow to update this task title")
+		return errors.New("user is not allowed to update this task title")
 	}
 
 	t.title = title

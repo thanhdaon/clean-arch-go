@@ -184,7 +184,16 @@ func (r MysqlTaskRepository) FindById(ctx context.Context, uuid string) (task.Ta
 }
 
 func (r MysqlTaskRepository) FindTasksForUser(ctx context.Context, userUUID string) ([]query.Task, error) {
-	return []query.Task{}, errors.E(errors.Op("task.FindTasksForUser"), fmt.Errorf("dump"))
+	op := errors.Op("MysqlTaskRepository.FindTasksForUser")
+
+	data := []MysqlTask{}
+	query := "SELECT * FROM `tasks` WHERE `assigned_to` = ? AND `deleted_at` IS NULL AND `archived_at` IS NULL"
+
+	if err := r.db.SelectContext(ctx, &data, query, userUUID); err != nil {
+		return nil, errors.E(op, err)
+	}
+
+	return fromMysqlTasksToQueryTasks(data), nil
 }
 
 func (r MysqlTaskRepository) RemoveAllTasks(ctx context.Context) error {

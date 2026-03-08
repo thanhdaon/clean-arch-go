@@ -30,6 +30,6 @@ func UserRoleFromString(s string) (Role, error) {
 	case RoleEmployee.slug:
 		return RoleEmployee, nil
 	default:
-		return RoleUnknown, errors.New("unknow role: " + s)
+		return RoleUnknown, errors.New("unknown role: " + s)
 	}
 }

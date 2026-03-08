@@ -3,7 +3,7 @@ package task
 import "errors"
 
 var (
-	StatusUnknow     = Status{}
+	StatusUnknown    = Status{}
 	StatusTodo       = Status{"todo"}
 	StatusPending    = Status{"pending"}
 	StatusInProgress = Status{"in_progress"}
@@ -35,7 +35,7 @@ func StatusFromString(s string) (Status, error) {
 	case "done":
 		return StatusCompleted, nil
 	default:
-		return StatusUnknow, errors.New("unknow status: " + s)
+		return StatusUnknown, errors.New("unknown status: " + s)
 	}
 }
 

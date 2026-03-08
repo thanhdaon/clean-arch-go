@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	stdHTTP "net/http"
+	"os"
 
 	"clean-arch-go/adapters"
 	"clean-arch-go/app"
@@ -91,7 +92,13 @@ func newApplication(db *sqlx.DB, videoSvc command.VideoService, logger *logrus.E
 	userRepository := adapters.NewMysqlUserRepository(db)
 	commentRepository := adapters.NewMysqlCommentRepository(db)
 	activityRepository := adapters.NewMysqlActivityRepository(db)
-	authService := auth.NewAuth("secret-key-for-development")
+
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "secret-key-for-development"
+		logrus.Warn("JWT_SECRET not set, using default development key")
+	}
+	authService := auth.NewAuth(jwtSecret)
 
 	application := app.Application{
 		Commands: app.Commands{

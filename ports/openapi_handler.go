@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -82,6 +81,21 @@ func (h HttpHandler) AddUser(w http.ResponseWriter, r *http.Request) {
 	body := PostUser{}
 	if err := render.Decode(r, &body); err != nil {
 		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	if err := validateEmail(string(body.Email)); err != nil {
+		validationError(r.Context(), err, w, r)
+		return
+	}
+
+	if err := validatePassword(body.Password); err != nil {
+		validationError(r.Context(), err, w, r)
+		return
+	}
+
+	if err := validateName(body.Name); err != nil {
+		validationError(r.Context(), err, w, r)
 		return
 	}
 
@@ -244,8 +258,6 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	op := errors.Op("http.CreateTask")
 	ctx := r.Context()
 
-	logrus.Info("CreateTask called")
-
 	user, err := userFromCtx(ctx)
 	if err != nil {
 		unauthorised(ctx, errors.E(op, err), w, r)
@@ -254,12 +266,14 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 
 	body := PostTask{}
 	if err := render.Decode(r, &body); err != nil {
-		logrus.WithError(err).Error("Failed to decode request body")
 		badRequest(ctx, err, w, r)
 		return
 	}
 
-	logrus.Infof("Creating task with title: %s, creator: %s", body.Title, user.UUID())
+	if err := validateTitle(body.Title); err != nil {
+		validationError(ctx, err, w, r)
+		return
+	}
 
 	err = h.app.Commands.CreateTask.Handle(ctx, command.CreateTask{
 		Title:   body.Title,
@@ -267,7 +281,6 @@ func (h HttpHandler) CreateTask(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		logrus.WithError(err).Errorf("CreateTask failed: %v", err)
 		responseError(ctx, errors.E(op, err), w, r)
 		return
 	}
@@ -328,6 +341,11 @@ func (h HttpHandler) UpdateTaskTitle(w http.ResponseWriter, r *http.Request, tas
 	body := PatchTaskTitle{}
 	if err := render.Decode(r, &body); err != nil {
 		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	if err := validateTitle(body.Title); err != nil {
+		validationError(r.Context(), err, w, r)
 		return
 	}
 
@@ -561,6 +579,11 @@ func (h HttpHandler) AddComment(w http.ResponseWriter, r *http.Request, taskId s
 		return
 	}
 
+	if err := validateContent(body.Content); err != nil {
+		validationError(r.Context(), err, w, r)
+		return
+	}
+
 	if err := h.app.Commands.AddComment.Handle(r.Context(), command.AddComment{
 		TaskID:   taskId,
 		AuthorID: caller.UUID(),
@@ -585,6 +608,11 @@ func (h HttpHandler) UpdateComment(w http.ResponseWriter, r *http.Request, taskI
 	body := PatchComment{}
 	if err := render.Decode(r, &body); err != nil {
 		badRequest(r.Context(), err, w, r)
+		return
+	}
+
+	if err := validateContent(body.Content); err != nil {
+		validationError(r.Context(), err, w, r)
 		return
 	}
 

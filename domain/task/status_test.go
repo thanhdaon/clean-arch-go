@@ -32,8 +32,8 @@ func TestStatusFromString_InvalidStatus(t *testing.T) {
 
 	status, err := task.StatusFromString("invalid")
 	require.Error(t, err)
-	require.Equal(t, task.StatusUnknow, status)
-	require.EqualError(t, err, "unknow status: invalid")
+	require.Equal(t, task.StatusUnknown, status)
+	require.EqualError(t, err, "unknown status: invalid")
 }
 
 func TestStatus_StringMethod(t *testing.T) {
@@ -48,7 +48,7 @@ func TestStatus_StringMethod(t *testing.T) {
 func TestStatus_IsZeroMethod(t *testing.T) {
 	t.Parallel()
 
-	require.True(t, task.StatusUnknow.IsZero())
+	require.True(t, task.StatusUnknown.IsZero())
 	require.False(t, task.StatusTodo.IsZero())
 	require.False(t, task.StatusPending.IsZero())
 	require.False(t, task.StatusInProgress.IsZero())

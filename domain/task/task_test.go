@@ -97,7 +97,7 @@ func TestUpdateTitle_InvalidUser(t *testing.T) {
 
 	err := tk.UpdateTitle(otherUser, "Updated Title")
 	require.Error(t, err)
-	require.EqualError(t, err, "user is not allow to update this task title")
+	require.EqualError(t, err, "user is not allowed to update this task title")
 }
 
 func TestChangeStatus(t *testing.T) {
@@ -118,7 +118,7 @@ func TestChangeStatus_InvalidUser(t *testing.T) {
 
 	err := tk.ChangeStatus(otherUser, task.StatusInProgress)
 	require.Error(t, err)
-	require.EqualError(t, err, "user is not allow to update status of this task")
+	require.EqualError(t, err, "user is not allowed to update status of this task")
 }
 
 func TestAssignTo(t *testing.T) {
@@ -369,7 +369,7 @@ func TestChangeStatus_ZeroStatus(t *testing.T) {
 	creator := newEmployer(t, "123")
 	tk := newTask(t, creator)
 
-	err := tk.ChangeStatus(creator, task.StatusUnknow)
+	err := tk.ChangeStatus(creator, task.StatusUnknown)
 
 	require.Error(t, err)
 	require.EqualError(t, err, "cannot update status of task to empty")

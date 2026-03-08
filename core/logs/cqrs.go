@@ -4,7 +4,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func LogCommandExecution(commandName string, cmd interface{}, err error) {
+func LogCommandExecution(commandName string, cmd any, err error) {
 	log := logrus.WithField("cmd", cmd)
 
 	if err == nil {

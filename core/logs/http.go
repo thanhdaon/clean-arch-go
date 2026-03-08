@@ -41,7 +41,7 @@ type StructuredLoggerEntry struct {
 	Logger logrus.FieldLogger
 }
 
-func (l *StructuredLoggerEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra interface{}) {
+func (l *StructuredLoggerEntry) Write(status, bytes int, header http.Header, elapsed time.Duration, extra any) {
 	l.Logger = l.Logger.WithFields(logrus.Fields{
 		"resp_status": status, "resp_bytes_length": bytes,
 		"resp_elapsed": elapsed.Round(time.Millisecond / 100).String(),
@@ -50,7 +50,7 @@ func (l *StructuredLoggerEntry) Write(status, bytes int, header http.Header, ela
 	l.Logger.Info("Request completed	")
 }
 
-func (l *StructuredLoggerEntry) Panic(v interface{}, stack []byte) {
+func (l *StructuredLoggerEntry) Panic(v any, stack []byte) {
 	l.Logger = l.Logger.WithFields(logrus.Fields{
 		"stack": string(stack),
 		"panic": fmt.Sprintf("%+v", v),

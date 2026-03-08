@@ -67,7 +67,7 @@ func TestMysqlActivityRepository_ActivityForTask_Pagination(t *testing.T) {
 	ctx := context.Background()
 	u, tk := seedUserAndTask(t, ctx, userRepo, taskRepo)
 
-	for i := 0; i < 5; i++ {
+	for i := range 5 {
 		a, _ := activity.New(tk.UUID(), u.UUID(), activity.TypeCommentAdded, map[string]any{"index": i})
 		require.NoError(t, repo.Add(ctx, a))
 	}

@@ -1,5 +1,7 @@
 package task
 
+import "slices"
+
 import "errors"
 
 var (
@@ -51,10 +53,5 @@ func (s Status) CanTransitionTo(target Status) bool {
 	if !exists {
 		return false
 	}
-	for _, t := range allowed {
-		if t == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(allowed, target)
 }

@@ -68,8 +68,8 @@ func (h loginHandler) Handle(ctx context.Context, query Login) (LoginResponse, e
 	}
 
 	token, err := h.auth.CreateIDToken(map[string]any{
-		"uuid": domainUser.UUID(),
-		"role": domainUser.Role().String(),
+		"user_uuid": domainUser.UUID(),
+		"user_role": domainUser.Role().String(),
 	})
 	if err != nil {
 		return LoginResponse{}, errors.E(op, err)

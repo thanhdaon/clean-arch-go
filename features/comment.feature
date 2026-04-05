@@ -1,6 +1,5 @@
 Feature: Comment CRUD and author restrictions
 
-  # Admin adds comment
   Scenario: Admin adds comment
     Given a task exists with status todo.
     And an admin user is authenticated.
@@ -8,7 +7,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment exists on the task.
 
-  # Employer adds comment
   Scenario: Employer adds comment
     Given a task exists with status todo.
     And an employer user is authenticated.
@@ -16,7 +14,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment exists on the task.
 
-  # Assigned user adds comment
   Scenario: Assigned user adds comment
     Given a task exists with status todo.
     And a user exists with role employer.
@@ -25,7 +22,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment exists on the task.
 
-  # Unassigned user adds comment returns forbidden
   Scenario: Unassigned user adds comment returns forbidden
     Given a task exists with status todo.
     And an employee user is authenticated.
@@ -33,21 +29,18 @@ Feature: Comment CRUD and author restrictions
     When the employee adds a comment "This is a comment" to the task.
     Then a forbidden error is returned.
 
-  # Add comment with empty content returns 400 error
   Scenario: Add comment with empty content returns 400 error
     Given a task exists with status todo.
     And an admin user is authenticated.
     When the admin adds a comment "" to the task.
     Then a bad request error is returned.
 
-  # Add comment to non-existent task returns 404 error
   Scenario: Add comment to non-existent task returns 404 error
     Given an admin user is authenticated.
     And no task exists with ID "nonexistent-123".
     When the admin adds a comment "This is a comment" to task "nonexistent-123".
     Then a not found error is returned.
 
-  # Author updates own comment
   Scenario: Author updates own comment
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -56,7 +49,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment has content "Updated content" in the database.
 
-  # Non-author updates comment returns forbidden
   Scenario: Non-author updates comment returns forbidden
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -64,7 +56,6 @@ Feature: Comment CRUD and author restrictions
     When the non-author updates the comment to "Updated content".
     Then a forbidden error is returned.
 
-  # Admin updates any comment
   Scenario: Admin updates any comment
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -73,7 +64,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment has content "Updated by admin" in the database.
 
-  # Update comment with empty content returns 400 error
   Scenario: Update comment with empty content returns 400 error
     Given a task exists with status todo.
     And a comment exists on the task.
@@ -81,7 +71,6 @@ Feature: Comment CRUD and author restrictions
     When the author updates the comment to "".
     Then a bad request error is returned.
 
-  # Update comment on non-existent task returns 404 error
   Scenario: Update comment on non-existent task returns 404 error
     Given an admin user is authenticated.
     And no task exists with ID "nonexistent-123".
@@ -89,7 +78,6 @@ Feature: Comment CRUD and author restrictions
     When the admin updates comment "comment-123" on task "nonexistent-123".
     Then a not found error is returned.
 
-  # Author deletes own comment
   Scenario: Author deletes own comment
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -98,7 +86,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment is deleted in the database.
 
-  # Non-author deletes comment returns forbidden
   Scenario: Non-author deletes comment returns forbidden
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -106,7 +93,6 @@ Feature: Comment CRUD and author restrictions
     When the non-author deletes the comment.
     Then a forbidden error is returned.
 
-  # Admin deletes any comment
   Scenario: Admin deletes any comment
     Given a task exists with status todo.
     And a comment exists on the task by user "user-123".
@@ -115,7 +101,6 @@ Feature: Comment CRUD and author restrictions
     Then no error is returned.
     And the comment is deleted in the database.
 
-  # Delete non-existent comment returns 404 error
   Scenario: Delete non-existent comment returns 404 error
     Given a task exists with status todo.
     And an admin user is authenticated.

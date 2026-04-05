@@ -2,19 +2,19 @@
 
 ## Overview
 
-**When to read this file:** When writing or translating acceptance test scenarios from `.txt` files into Go component tests in `tests/`. Also read when debugging a test that doesn't match the intent of its `.txt` source.
+**When to read this file:** When writing or translating acceptance test scenarios from `.feature` files into Go component tests in `tests/`. Also read when debugging a test that doesn't match the intent of its `.feature` source.
 
 ---
 
 ## Principle
 
-Two-artifact approach — `.txt` files are the source of truth, component tests are the runnable form:
+Two-artifact approach — `.feature` files are the source of truth, component tests are the runnable form:
 
 ```
-.txt (spec) → component_test.go (tests/) → go test
+.feature (Gherkin spec) → component_test.go (tests/) → go test
 ```
 
-Plain-text Given/When/Then files describe behaviour in domain language. Component tests at the HTTP layer are written to mirror those scenarios exactly. The source filename and GIVEN line number are embedded in each test name for traceability.
+Gherkin Feature files describe behaviour in domain language using standard `Given/When/Then` syntax. Component tests at the HTTP layer are written to mirror those scenarios exactly. The source filename and first `Given` line number are embedded in each test name for traceability.
 
 This fulfills the BDD/TDD workflow described in `AGENTS.md`:
 > Write a custom parser/runner as glue code connecting scenario language to production code.
@@ -39,12 +39,12 @@ Component tests sit at the **HTTP layer** — they exercise the full stack throu
 ## Directory Structure
 
 ```
-acceptanceTests/          # .txt spec files (never auto-modified)
-  task.txt
-  user.txt
-  comment.txt
-  activity.txt
-  tag.txt
+features/                # Gherkin .feature spec files (never auto-modified)
+  task.feature
+  user.feature
+  comment.feature
+  activity.feature
+  tag.feature
 tests/
   helpers_test.go         # HTTP helpers and DB assertion functions
   setup_test.go           # SetupComponentTest and TestFixtures
@@ -77,38 +77,40 @@ Each test uses `SetupComponentTest(t)` which returns a `*TestFixtures` containin
 
 **Test name convention:**
 ```
-"<source-file>:<first-GIVEN-line> - <description>"
+"<source-file>:<first-Given-line> - <description>"
 ```
-Example: `"task.txt:12 - Admin creates task"`
+Example: `"task.feature:8 - Admin creates task"`
 
 ---
 
-## File Format
+## File Format (Gherkin)
 
-```
-; Comment lines start with semicolons.
+Gherkin files use standard `.feature` extension with the following structure:
 
-;===============================================================
-; Description of this test case.
-;===============================================================
-GIVEN a user exists with role employee.
-GIVEN a task exists with status todo.
-GIVEN the task is assigned to the user.
+```gherkin
+Feature: Task lifecycle and permissions
 
-WHEN the employee changes the task status to in-progress.
+  # Description of this test case.
+  Scenario: Admin creates task
+    Given an admin user is authenticated.
+    Given a task exists with status todo.
+    Given the task is assigned to the user.
 
-THEN the task has status in_progress.
-and no error is returned.
+    When the admin creates a task with title "New Task".
+
+    Then no error is returned.
+    And the task exists in the database with status "todo".
 ```
 
 ### Structure Rules
 
-- `GIVEN`, `WHEN`, `THEN` are case-sensitive keywords.
-- Lines starting with `;` are comments and are ignored.
-- `===...===` separator lines mark the boundary between independent test cases.
-- `and` prefix (lowercase) is a continuation of the preceding THEN — treated identically to THEN.
-- Each separator block becomes one `t.Run` subtest.
-- Blank lines are ignored.
+- `Feature:` is the top-level keyword — one per file, describes the domain
+- `Scenario:` marks each independent test case
+- `Given`, `When`, `Then` are case-sensitive keywords (Title Case)
+- `And` continues the preceding step type (Given/When/Then)
+- Lines starting with `#` are comments
+- Blank lines separate scenarios for readability
+- Each `Scenario:` block becomes one `t.Run` subtest
 
 ---
 
@@ -748,51 +750,47 @@ The tests run against a live server started by `SetupComponentTest`.
 
 ## Rules
 
-- Never modify a `.txt` acceptance test without explicit permission.
-- The test name **must** embed the `.txt` filename and first GIVEN line number — this is the traceability link.
-- Every GIVEN, WHEN, and THEN directive must map to a real helper call — no no-op stubs.
-- `require` for setup (GIVEN/WHEN failures stop the test), `assert` for THEN assertions.
+- Never modify a `.feature` acceptance test without explicit permission.
+- The test name **must** embed the `.feature` filename and first `Given` line number — this is the traceability link.
+- Every `Given`, `When`, and `Then` step must map to a real helper call — no no-op stubs.
+- `require` for setup (Given/When failures stop the test), `assert` for Then assertions.
 - Each test function is isolated with its own data via API calls — never share state between tests.
 - Every test must be seen to fail before it passes (per `AGENTS.md`).
-- If a `.txt` scenario cannot be translated, write the test as a failing stub with a `t.Skip("not yet implemented: ...")` and report it.
-- `.txt` files are committed; tests are committed; no intermediate generated files exist.
+- If a `.feature` scenario cannot be translated, write the test as a failing stub with a `t.Skip("not yet implemented: ...")` and report it.
+- `.feature` files are committed; tests are committed; no intermediate generated files exist.
 
 ---
 
 ## Full Example
 
-`.txt` source (`task.txt`):
+`.feature` source (`task.feature`):
 
-```
-;===============================================================
-; Admin creates task
-;===============================================================
-GIVEN an admin user is authenticated.
+```gherkin
+Feature: Task lifecycle and permissions
 
-WHEN the admin creates a task with title "New Task".
+  # Admin creates task
+  Scenario: Admin creates task
+    Given an admin user is authenticated.
+    When the admin creates a task with title "New Task".
+    Then no error is returned.
+    And the task exists in the database with status "todo".
 
-THEN no error is returned.
-and the task exists in the database with status "todo".
-
-;===============================================================
-; Employee creates task returns forbidden
-;===============================================================
-GIVEN an employee user is authenticated.
-
-WHEN the employee creates a task with title "New Task".
-
-THEN a forbidden error is returned.
+  # Employee creates task returns forbidden
+  Scenario: Employee creates task returns forbidden
+    Given an employee user is authenticated.
+    When the employee creates a task with title "New Task".
+    Then a forbidden error is returned.
 ```
 
 Component test (`tests/task_test.go`):
 
 ```go
-// Scenarios from task.txt — keep in sync with that file.
+// Scenarios from task.feature — keep in sync with that file.
 func testCreateTask(t *testing.T, f *TestFixtures) {
     t.Helper()
 
-    // task.txt:12 - Admin creates task
-    t.Run("task.txt:12 - Admin creates task", func(t *testing.T) {
+    // task.feature:8 - Admin creates task
+    t.Run("task.feature:8 - Admin creates task", func(t *testing.T) {
         title := fmt.Sprintf("New-Task-%d", time.Now().UnixNano())
         resp, body := createTask(t, f.AuthToken, map[string]any{"title": title})
         require.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
@@ -802,8 +800,8 @@ func testCreateTask(t *testing.T, f *TestFixtures) {
         assertTaskFieldEquals[string](t, f.DB, taskID, "status", "todo")
     })
 
-    // task.txt:31 - Employee creates task returns forbidden
-    t.Run("task.txt:31 - Employee creates task returns forbidden", func(t *testing.T) {
+    // task.feature:20 - Employee creates task returns forbidden
+    t.Run("task.feature:20 - Employee creates task returns forbidden", func(t *testing.T) {
         email := fmt.Sprintf("emp-%d@test.com", time.Now().UnixNano())
         resp, body := postUser(t, map[string]any{"role": "employee", "name": "Emp", "email": email, "password": "pass"})
         require.Equal(t, http.StatusOK, resp.StatusCode, "setup failed: %s", string(body))

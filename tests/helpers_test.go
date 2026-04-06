@@ -498,6 +498,15 @@ func assertTaskDeletedInDB(t *testing.T, db *sqlx.DB, taskID string) {
 	require.Equal(t, 1, count, "task %s should be soft-deleted in DB", taskID)
 }
 
+func assertTaskNotDeletedInDB(t *testing.T, db *sqlx.DB, taskID string) {
+	t.Helper()
+
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM tasks WHERE id = ? AND deleted_at IS NULL", taskID)
+	require.NoError(t, err)
+	require.Equal(t, 1, count, "task %s should NOT be soft-deleted in DB", taskID)
+}
+
 func createUserAndGetID(t *testing.T, db *sqlx.DB) string {
 	t.Helper()
 

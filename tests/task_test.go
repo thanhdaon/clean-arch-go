@@ -233,11 +233,51 @@ func testArchiveTask(t *testing.T, f *TestFixtures) {
 func testDeleteTask(t *testing.T, f *TestFixtures) {
 	t.Helper()
 
-	creatorID := createUserAndGetID(t, f.DB)
-	taskID := createTaskAndGetID(t, f.DB, f.AuthToken, creatorID)
+	t.Run("admin_deletes_task", func(t *testing.T) {
+		t.Parallel()
+		creatorID := createUserAndGetID(t, f.DB)
+		taskID := createTaskAndGetID(t, f.DB, f.AuthToken, creatorID)
 
-	resp, body := deleteTask(t, f.AuthToken, taskID)
-	assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+		resp, body := deleteTask(t, f.AuthToken, taskID)
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
 
-	assertTaskDeletedInDB(t, f.DB, taskID)
+		assertTaskDeletedInDB(t, f.DB, taskID)
+	})
+
+	t.Run("employer_deletes_own_task", func(t *testing.T) {
+		t.Parallel()
+		employerID, employerToken := createUserWithRoleAndGetToken(t, f.DB, "employer")
+		taskID := createTaskAndGetID(t, f.DB, employerToken, employerID)
+
+		resp, body := deleteTask(t, employerToken, taskID)
+		assert.Equal(t, http.StatusOK, resp.StatusCode, "unexpected status: %s", string(body))
+
+		assertTaskDeletedInDB(t, f.DB, taskID)
+	})
+
+	t.Run("employer_deletes_another_task_returns_forbidden", func(t *testing.T) {
+		t.Parallel()
+		_, otherEmployerToken := createUserWithRoleAndGetToken(t, f.DB, "employer")
+		creatorID := createUserAndGetID(t, f.DB)
+		taskID := createTaskAndGetID(t, f.DB, f.AuthToken, creatorID)
+
+		resp, body := deleteTask(t, otherEmployerToken, taskID)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assertResponseStatus(t, body, http.StatusForbidden)
+
+		assertTaskNotDeletedInDB(t, f.DB, taskID)
+	})
+
+	t.Run("employee_deletes_task_returns_forbidden", func(t *testing.T) {
+		t.Parallel()
+		_, employeeToken := createUserWithRoleAndGetToken(t, f.DB, "employee")
+		creatorID := createUserAndGetID(t, f.DB)
+		taskID := createTaskAndGetID(t, f.DB, f.AuthToken, creatorID)
+
+		resp, body := deleteTask(t, employeeToken, taskID)
+		assert.Equal(t, http.StatusOK, resp.StatusCode)
+		assertResponseStatus(t, body, http.StatusForbidden)
+
+		assertTaskNotDeletedInDB(t, f.DB, taskID)
+	})
 }

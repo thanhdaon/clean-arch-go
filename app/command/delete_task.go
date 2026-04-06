@@ -4,10 +4,12 @@ import (
 	"clean-arch-go/core/decorator"
 	"clean-arch-go/core/errors"
 	"clean-arch-go/domain/activity"
+	"clean-arch-go/domain/errkind"
 	"clean-arch-go/domain/task"
 	"clean-arch-go/domain/user"
 	"context"
 	"log"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -39,7 +41,10 @@ func (h deleteTaskHandler) Handle(ctx context.Context, cmd DeleteTask) error {
 
 	updateFn := func(ctx context.Context, t task.Task) (task.Task, error) {
 		if err := t.Delete(cmd.Caller); err != nil {
-			return nil, errors.E(errors.E("cmd.DeleteTask.updateFn"), err)
+			if strings.Contains(err.Error(), "only employer") || strings.Contains(err.Error(), "only task creator") {
+				return nil, errors.E(errors.Op("cmd.DeleteTask.updateFn"), errkind.Permission, err)
+			}
+			return nil, errors.E(errors.Op("cmd.DeleteTask.updateFn"), err)
 		}
 		return t, nil
 	}
